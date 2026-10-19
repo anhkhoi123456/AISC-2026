@@ -12,17 +12,14 @@ export function DemoTools() {
   const router = useRouter();
   return (
     <>
-      <button className="demo-tools-toggle" onClick={() => setOpen(true)}>
+      <button
+        className="demo-tools-toggle"
+        title="Công cụ demo"
+        aria-label={`Vai trò demo: ${{ guest: "Khách", tenant: "Người thuê", landlord: "Chủ trọ", admin: "Admin" }[data.role]}`}
+        onClick={() => setOpen(true)}
+      >
         <Icon name="sliders" size={14} />
-        Vai trò demo:{" "}
-        {
-          {
-            guest: "Khách",
-            tenant: "Người thuê",
-            landlord: "Chủ trọ",
-            admin: "Admin",
-          }[data.role]
-        }
+        <span className="sr-only">Công cụ demo</span>
       </button>
       {storageError && (
         <p role="alert" className="warning storage-warning">

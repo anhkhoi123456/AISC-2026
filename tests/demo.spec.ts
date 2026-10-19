@@ -9,6 +9,7 @@ test.afterEach(() => {
 });
 async function activate(page: import("@playwright/test").Page) {
   await page.goto("/dang-nhap");
+  await page.getByText("Trải nghiệm demo", { exact: true }).click();
   await page.getByLabel("Tên hiển thị").fill("Minh Anh");
   await page.getByLabel("Email dùng trong demo").fill("demo@example.com");
   await page

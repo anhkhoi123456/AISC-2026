@@ -7,7 +7,7 @@ export const areas = [
   "KTX khu B",
 ];
 export const roomImages = [
-  "/images/room-1.jpg",
+  "/images/student-room.jpg",
   "/images/room-2.jpg",
   "/images/room-3.jpg",
   "/images/room-4.jpg",

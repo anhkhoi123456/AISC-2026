@@ -9,3 +9,5 @@ Tải ngày 19/10/2026 từ images.unsplash.com. Không dùng ảnh như bằng 
 - person-1.jpg: https://images.unsplash.com/photo-1534528741775-53994a69daeb
 - person-2.jpg: https://images.unsplash.com/photo-1517841905240-472988babdf9
 - person-3.jpg: https://images.unsplash.com/photo-1524504388940-b1c1722653e1
+
+- student-room.jpg (ảnh phòng ngủ minh họa, không phải phòng thật trên AnTro): https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af

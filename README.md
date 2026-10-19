@@ -23,9 +23,15 @@ Webpack được chọn cho dev/build vì Turbopack không bind được tiến 
 
 ## Chuyển vai trò và xác minh
 
-Nút **Vai trò demo** dưới thanh điều hướng mở công cụ chuyển Khách / Người thuê / Chủ trọ / Admin. Chọn một vai trò đăng nhập sẽ kích hoạt tài khoản mẫu, không cấp quyền thật. Có thể đổi về Chưa xác minh hoặc Bị hạn chế để thử màn hình giới hạn.
+Nút biểu tượng thanh chỉnh **Công cụ demo** trên header mở công cụ chuyển Khách / Người thuê / Chủ trọ / Admin. Chọn một vai trò đăng nhập sẽ kích hoạt tài khoản mẫu, không cấp quyền thật. Có thể đổi về Chưa xác minh hoặc Bị hạn chế để thử màn hình giới hạn.
 
-Luồng thông thường ở `/dang-nhap` dùng tên/email mẫu, OTP **123456**. Chọn kết quả eKYC giả lập; không mở camera hoặc nhận CCCD. `/admin` có bước xác nhận vào không gian vận hành demo. Tất cả quyền là mô phỏng frontend, không dùng để bảo vệ dữ liệu production.
+Trang `/dang-nhap` có form email và mật khẩu mẫu (tối thiểu 6 ký tự), hiện/ẩn mật khẩu, chuyển đăng ký và hướng dẫn quên mật khẩu mô phỏng. Vùng **Trải nghiệm demo** thu gọn cung cấp email **demo@antro.vn**, mật khẩu mẫu **Antro123!**, tên hiển thị và lối vào nhanh giữ luồng cũ; OTP **123456**. Mật khẩu nhập không được lưu hoặc gửi ra ngoài. Chọn kết quả eKYC giả lập; không mở camera hoặc nhận CCCD. `/admin` có bước xác nhận vào không gian vận hành demo. Tất cả quyền là mô phỏng frontend, không dùng để bảo vệ dữ liệu production.
+
+## Giao diện
+
+Trang chủ đưa ô tìm địa điểm, ngân sách và nút tìm ngay trong hero; gợi ý trường, metro và tiện ích hỗ trợ chọn bằng bàn phím hoặc chạm. Trang đăng nhập chia hai vùng trên desktop, ưu tiên form trên mobile. Ảnh phòng ngủ mới chỉ minh họa không gian sống.
+
+Nút giao diện trên header có **Sáng / Tối / Theo hệ thống**, lưu riêng vào `localStorage['antro-theme']`. Script trong head áp dụng lựa chọn trước khi hiển thị nội dung; chế độ hệ thống theo thay đổi của thiết bị. Các màu dùng token chung cho tìm phòng, RoomMatch, quản lý, chat và modal; ảnh giữ nguyên màu.
 
 ## Các trang
 
@@ -57,7 +63,7 @@ Theo cập nhật mới nhất của chủ dự án, giữ **3 phòng công khai
 
 `localStorage['antro-demo-v2']` lưu `{ version: 2, data: ... }`. Kiểm tra schema cả dữ liệu lồng nhau trước khi nạp; dữ liệu hỏng/khác version được khôi phục về seed kèm thông báo. Bộ nhớ bị chặn hoặc đầy sẽ có cảnh báo, vẫn dùng được trong phiên. Phiên bản v1 cũ không tự nạp; khóa cũ được giữ nguyên. Không lưu File/Blob, chỉ tham chiếu ảnh local.
 
-**Reset:** mở Vai trò demo → Đặt lại dữ liệu demo → Xác nhận đặt lại. Hoặc dùng nút xác nhận ở `/tai-khoan`. Reset xóa tiến trình của bản v2, không tác động tệp ảnh hoặc mã nguồn.
+**Reset:** mở Công cụ demo → Đặt lại dữ liệu demo → Xác nhận đặt lại. Hoặc dùng nút xác nhận ở `/tai-khoan`. Reset xóa tiến trình của bản v2, không tác động tệp ảnh hoặc mã nguồn.
 
 ## Cấu trúc và nơi thay khi nối backend
 
@@ -102,6 +108,6 @@ npm run test:e2e
 
 Unit test kiểm tra đơn vị tiền, parser/alias, lọc bắt buộc/ưu tiên, chấm hai chiều, zero denominator, Match duy nhất, quyền gửi/chống trùng, schema lưu và đoạn trích hợp đồng.
 
-Playwright dùng Chrome có sẵn trên macOS tại đường dẫn trong `playwright.config.ts`; máy khác cần cấu hình lại executable hoặc dùng browser do Playwright cài. Kiểm thử route trực tiếp, refresh/Back, draft, xác minh, chat, duyệt/ẩn/khôi phục tin và ảnh chụp 390px/1440px ở `test-results/`. Danh sách kiểm tra này mô tả bộ test, không tự khẳng định mọi lần chạy đều đạt.
+Playwright dùng Chrome có sẵn trên macOS tại đường dẫn trong `playwright.config.ts`; máy khác cần cấu hình lại executable hoặc dùng browser do Playwright cài. Kiểm thử route trực tiếp, refresh/Back, draft, xác minh, chat, duyệt/ẩn/khôi phục tin và ảnh chụp 390px/1440px ở `test-results/`. Bộ test thiết kế kiểm tra thêm hai theme ở 390×900 và 1440×900, ô tìm xuất hiện trong viewport, header gọn, dropdown, đăng nhập/đăng ký, hướng dẫn mật khẩu, theme lưu và theo hệ thống. Có thể dùng `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npm run test:e2e` với server ở cổng riêng. Danh sách kiểm tra này mô tả bộ test, không tự khẳng định mọi lần chạy đều đạt.
 
 Ảnh phòng/nhân vật chỉ minh họa, dùng local. Nguồn ở [public/images/SOURCES.md](public/images/SOURCES.md).

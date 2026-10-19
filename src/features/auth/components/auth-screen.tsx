@@ -4,95 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "@/shared/lib/demo-store";
 import { Icon } from "@/shared/components/icon";
+import { LoginScreen } from "./login-screen";
 export function AuthScreen({ verify = false }: { verify?: boolean }) {
   const { data, update, notify } = useDemo();
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [name, setName] = useState(data.name);
   const [outcome, setOutcome] = useState("active");
   const [otp, setOtp] = useState("");
   const destination = () => {
     const n = new URLSearchParams(window.location.search).get("next");
     return n?.startsWith("/") && !n.startsWith("//") ? n : "/tai-khoan";
   };
-  if (!verify)
-    return (
-      <main className="auth-layout">
-        <div className="auth-visual">
-          <img src="/images/room-2.jpg" alt="Không gian sống ấm áp" />
-          <div>
-            <p className="eyebrow">MỖI KHỞI ĐẦU ĐỀU CẦN MỘT NƠI</p>
-            <h1>
-              Một nơi để ở.
-              <br />
-              Một nơi thuộc về.
-            </h1>
-            <p>Căn phòng tiếp theo và người bạn mới có thể đang chờ bạn.</p>
-          </div>
-        </div>
-        <div className="auth-content">
-          <span className="auth-icon">
-            <Icon name="leaf" size={30} />
-          </span>
-          <p className="eyebrow">CHÀO BẠN ĐẾN VỚI ANTRO</p>
-          <h1>Bắt đầu câu chuyện mới.</h1>
-          <p className="muted">
-            Dùng tài khoản mẫu để khám phá toàn bộ hành trình.
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              update((s) => ({
-                ...s,
-                name: name.trim(),
-                role: "tenant",
-                status: s.status === "active" ? "active" : "pending",
-              }));
-              if (data.status === "active") router.push(destination());
-              else
-                router.push(
-                  "/xac-minh?next=" + encodeURIComponent(destination()),
-                );
-            }}
-          >
-            <label>
-              Tên hiển thị
-              <input
-                required
-                minLength={2}
-                maxLength={40}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                placeholder="Bạn tên là gì?"
-              />
-            </label>
-            <label>
-              Email dùng trong demo
-              <input
-                type="email"
-                required
-                placeholder="ban@example.com"
-                autoComplete="email"
-              />
-            </label>
-            <button className="btn primary full">
-              Tiếp tục với tài khoản demo <Icon name="arrow" size={17} />
-            </button>
-          </form>
-          <div className="info-note small">
-            <Icon name="shield" size={20} />
-            <p>
-              Đăng nhập chỉ được mô phỏng trong trình duyệt. Không dùng mật khẩu
-              hoặc thông tin cá nhân thật.
-            </p>
-          </div>
-          <Link href="/tim-phong" className="text-btn muted">
-            Tiếp tục xem phòng với tư cách khách <Icon name="arrow" size={15} />
-          </Link>
-        </div>
-      </main>
-    );
+  if (!verify) return <LoginScreen />;
   if (data.status === "guest")
     return (
       <main className="container section">

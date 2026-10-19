@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { DemoProvider, useDemo } from "@/shared/lib/demo-store";
 import { Icon } from "./icon";
 import { DemoTools } from "./demo-tools";
+import { ThemePicker } from "./theme-picker";
 const nav = [
   ["/tim-phong", "Tìm phòng", "home"],
   ["/roommatch", "RoomMatch", "users"],
@@ -45,6 +46,8 @@ function Navigation({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="nav-actions">
+            <ThemePicker />
+            <DemoTools />
             <Link
               href="/yeu-thich"
               className="icon-btn favorite-nav"
@@ -60,10 +63,14 @@ function Navigation({ children }: { children: ReactNode }) {
             </Link>
             <Link
               className="account-link"
+              aria-label={data.status === "guest" ? "Đăng nhập" : "Tài khoản"}
               href={data.status === "guest" ? "/dang-nhap" : "/tai-khoan"}
             >
               {data.status === "guest" ? (
-                "Đăng nhập"
+                <>
+                  <Icon name="user" size={18} />
+                  <span>Đăng nhập</span>
+                </>
               ) : (
                 <>
                   <span className="avatar tiny">{data.name[0]}</span>
@@ -97,7 +104,6 @@ function Navigation({ children }: { children: ReactNode }) {
           </nav>
         )}
       </header>
-      <DemoTools />
       {!ready ? (
         <main className="container section">
           <p>Đang chuẩn bị trải nghiệm…</p>

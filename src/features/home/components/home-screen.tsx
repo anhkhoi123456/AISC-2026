@@ -1,16 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Icon } from "@/shared/components/icon";
 import { useDemo } from "@/shared/lib/demo-store";
-import { areas } from "@/features/listings/mocks/listings";
+import { HeroSearch } from "./hero-search";
 import { RoomCard } from "@/features/listings/components/room-card";
 export function HomeScreen() {
   const { data } = useDemo();
-  const router = useRouter();
-  const [area, setArea] = useState("");
-  const [budget, setBudget] = useState("");
   return (
     <main>
       <section className="hero">
@@ -31,97 +26,29 @@ export function HomeScreen() {
             </p>
             <div className="hero-cta">
               <Link className="btn primary" href="/tim-phong">
-                Khám phá phòng <Icon name="arrow" size={18} />
+                Tìm phòng <Icon name="arrow" size={18} />
               </Link>
               <Link className="btn ghost" href="/roommatch">
                 <Icon name="users" size={18} />
                 Tìm bạn ở ghép
               </Link>
             </div>
-            <div className="hero-note">
-              <span className="stacked-avatars">
-                {[1, 2, 3].map((i) => (
-                  <img
-                    key={i}
-                    src={`/images/person-${i}.jpg`}
-                    alt="Nhân vật minh họa"
-                  />
-                ))}
-              </span>
-              <div>
-                <strong>Ở cùng nhau, bắt đầu tốt hơn.</strong>
-                <span>Kết nối theo nhu cầu & thói quen sống</span>
-              </div>
-            </div>
           </div>
           <div className="hero-visual">
             <img
               className="hero-room"
-              src="/images/room-1.jpg"
-              alt="Không gian phòng sáng với nội thất gỗ và cây xanh"
+              src="/images/student-room.jpg"
+              alt="Phòng ngủ nhỏ với giường gỗ, bàn cạnh giường và đèn đọc sách"
             />
-            <div className="photo-caption">
-              <Icon name="sun" size={16} /> Một góc nhỏ. Một cuộc sống mới.
-            </div>
-            <div className="floating-match">
-              <span className="match-symbol">
-                <Icon name="users" size={25} />
-              </span>
-              <div>
-                <strong>Không chỉ tìm phòng</strong>
-                <span>Tìm người cùng bạn gọi đó là nhà.</span>
-              </div>
-              <span className="sparkle">✳</span>
-            </div>
-            <span className="vertical-caption">
-              YOUR NEXT CHAPTER STARTS HERE
-            </span>
+            <p className="hero-image-note">
+              Góc nhỏ vừa đủ cho những ngày tự lập.
+              <span>Ảnh không gian sống minh họa</span>
+            </p>
           </div>
         </div>
-      </section>
-      <section className="container search-section">
-        <form
-          className="home-search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            router.push(
-              `/tim-phong?area=${encodeURIComponent(area)}&budget=${budget}`,
-            );
-          }}
-        >
-          <label>
-            <span>
-              <Icon name="pin" size={17} />
-              Bạn muốn ở đâu?
-            </span>
-            <select value={area} onChange={(e) => setArea(e.target.value)}>
-              <option value="">Quanh Làng Đại học</option>
-              {areas.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>
-              <Icon name="home" size={17} />
-              Ngân sách mỗi người
-            </span>
-            <select value={budget} onChange={(e) => setBudget(e.target.value)}>
-              <option value="">Khoảng chi phí phù hợp</option>
-              <option value="1500000">Dưới 1,5 triệu / tháng</option>
-              <option value="2000000">Dưới 2 triệu / tháng</option>
-              <option value="3000000">Dưới 3 triệu / tháng</option>
-            </select>
-          </label>
-          <button className="btn primary">
-            <Icon name="search" size={19} />
-            Tìm căn phòng của bạn
-          </button>
-        </form>
-        <p className="search-footnote">
-          <Icon name="shield" size={14} /> Chi phí minh bạch <span>•</span> Kết
-          nối đúng nhu cầu <span>•</span> Ưu tiên không gian sống phù hợp
-        </p>
+        <div className="container hero-search-container">
+          <HeroSearch />
+        </div>
       </section>
       <section className="container section">
         <p className="landlord-entry">

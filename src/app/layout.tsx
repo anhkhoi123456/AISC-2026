@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Shell } from "@/shared/components/shell";
 import "./globals.css";
+import "./design.css";
+import { themeBootstrap } from "@/shared/lib/theme";
 export const metadata: Metadata = {
   title: "AnTro — Tìm nơi ở, gặp người hợp",
   description:
@@ -10,7 +12,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
       <body>
         <Shell>{children}</Shell>
       </body>

@@ -48,6 +48,18 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
     [error, setError] = useState(""),
     [retry, setRetry] = useState(0);
   const filterRef = useRef<HTMLElement>(null);
+  const sourceQuery = params.get("q") ?? "";
+  useEffect(() => {
+    if (sourceQuery) {
+      setQuery(sourceQuery);
+      const parsed = parseQuery(sourceQuery);
+      setUnknown(parsed.unknown);
+      if (parsed.unknown.length)
+        setNote(
+          "Một phần nhu cầu chưa được hiểu. Hãy chỉnh bằng bộ lọc bên dưới.",
+        );
+    }
+  }, [sourceQuery]);
   const suggestions = suggestPlaces(query);
   const listings = useMemo(
     () => data.listings.filter((r) => !favorites || data.saved.includes(r.id)),
