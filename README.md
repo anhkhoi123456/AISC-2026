@@ -2,9 +2,11 @@
 
 Website tiếng Việt tìm phòng và bạn ở ghép quanh Làng Đại học Quốc gia. Next.js App Router + React + TypeScript + Tailwind CSS + Lucide Icons. Giữ framework của repository; React Router (`HashRouter`) điều hướng hai bước trong công cụ đọc hợp đồng bằng fragment `#/ket-qua`, hỗ trợ Back và tải lại kết quả; Next.js vẫn quản lý đường dẫn trang.
 
+Hướng dẫn host riêng cho team, cấu hình Vercel và phần cần làm trên tài khoản: [docs/HOSTING.md](docs/HOSTING.md). Chưa có deployment được tạo.
+
 ## Cài và chạy
 
-Yêu cầu Node.js >=22 và npm. Không cần API key hoặc dịch vụ backend.
+Yêu cầu Node.js 24.x và npm (có `.nvmrc`). Không cần API key hoặc dịch vụ backend.
 
 ```sh
 cd "/Users/giabinhne/Documents/AISC/AnTro"

@@ -4,6 +4,7 @@ import "./globals.css";
 import "./design.css";
 import { themeBootstrap } from "@/shared/lib/theme";
 export const metadata: Metadata = {
+  robots: { index: false, follow: false },
   title: "AnTro — Tìm nơi ở, gặp người hợp",
   description:
     "Tìm phòng và bạn ở ghép quanh Làng Đại học Quốc gia. Không gian cho những khởi đầu mới.",
