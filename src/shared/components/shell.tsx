@@ -26,7 +26,7 @@ function Navigation({ children }: { children: ReactNode }) {
         <div className="nav-inner">
           <Link href="/" className="brand" aria-label="AnTro trang chủ">
             <span className="brand-symbol">
-              <Icon name="home" size={23} />
+              <img className="brand-house" src="/images/logo.jpg" alt="" />
             </span>
             AnTro<span className="brand-dot">.</span>
           </Link>
@@ -108,7 +108,10 @@ function Navigation({ children }: { children: ReactNode }) {
       <footer className="site-footer">
         <div className="container footer-inner">
           <div>
-            <Link className="brand" href="/">
+            <Link className="brand" href="/" aria-label="AnTro trang chủ">
+              <span className="brand-symbol">
+                <img className="brand-house" src="/images/logo.jpg" alt="" />
+              </span>
               AnTro<span className="brand-dot">.</span>
             </Link>
             <p>Một căn phòng phù hợp. Một người bạn đồng hành.</p>
