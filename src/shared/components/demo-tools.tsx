@@ -1,4 +1,6 @@
 "use client";
+import Link from "next/link";
+import { consentContact } from "@/services/chat-safety";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "@/shared/lib/demo-store";
@@ -41,15 +43,18 @@ export function DemoTools() {
                 update((s) => ({
                   ...s,
                   role,
-                  status: role === "guest" ? "guest" : "active",
+                  status: role === "guest" ? "guest" : "pending",
+                  identity: s.identity
+                    ? { ...s.identity, otp: false, verified: false }
+                    : s.identity,
                 }));
                 setOpen(false);
                 router.push(
                   {
                     guest: "/",
-                    tenant: "/tim-phong",
-                    landlord: "/quan-ly-tin",
-                    admin: "/admin",
+                    tenant: "/dang-nhap",
+                    landlord: "/dang-nhap?next=%2Fquan-ly-tin",
+                    admin: "/dang-nhap?next=%2Fadmin",
                   }[role],
                 );
               }}
@@ -60,25 +65,96 @@ export function DemoTools() {
               <option value="admin">Admin</option>
             </select>
           </label>
-          <label>
-            Xác minh mô phỏng
-            <select
-              value={data.status}
-              onChange={(e) =>
-                update((s) => ({
-                  ...s,
-                  status: e.target.value as typeof s.status,
-                }))
-              }
-            >
-              <option value="guest">Khách</option>
-              <option value="pending">Chưa xác minh</option>
-              <option value="active">Đã xác minh mẫu</option>
-              <option value="review">Chờ kiểm tra</option>
-              <option value="blocked">Bị hạn chế</option>
-              <option value="rejected">Chưa đạt</option>
-            </select>
-          </label>
+          <p>
+            Chọn vai trò rồi hoàn tất đăng nhập → OTP → danh tính mẫu. Không có
+            chuyển trực tiếp sang đã xác minh.
+          </p>
+          <details>
+            <summary>Thay dữ liệu danh tính mẫu</summary>
+            <p>Thay mẫu sẽ yêu cầu xác minh lại và ẩn hồ sơ.</p>
+            <label>
+              Tên danh tính mẫu
+              <input
+                value={data.identity?.name ?? data.name}
+                onChange={(e) =>
+                  update((s) => ({
+                    ...s,
+                    status: "pending",
+                    identity: {
+                      ...s.identity!,
+                      name: e.target.value,
+                      verified: false,
+                    },
+                    profile: {
+                      ...s.profile,
+                      name: e.target.value,
+                      visible: false,
+                    },
+                  }))
+                }
+              />
+            </label>
+            <label>
+              Giới tính mẫu
+              <select
+                value={data.identity?.gender ?? "Nữ"}
+                onChange={(e) =>
+                  update((s) => ({
+                    ...s,
+                    status: "pending",
+                    identity: {
+                      ...s.identity!,
+                      gender: e.target.value,
+                      verified: false,
+                    },
+                    profile: {
+                      ...s.profile,
+                      gender: e.target.value,
+                      visible: false,
+                    },
+                    draft: null,
+                  }))
+                }
+              >
+                <option>Nữ</option>
+                <option>Nam</option>
+              </select>
+            </label>
+          </details>
+          <Link
+            className="text-btn"
+            href="/admin"
+            onClick={() => setOpen(false)}
+          >
+            Mở không gian vận hành demo
+          </Link>
+          <details>
+            <summary>Mô phỏng phản hồi chia sẻ liên hệ</summary>
+            <p>Chỉ áp dụng cho hội thoại mẫu đang hoạt động.</p>
+            {data.conversations
+              .filter((c) => !c.ended)
+              .map((c) => (
+                <div key={c.id}>
+                  <span>{c.name}</span>
+                  <button
+                    className="btn outline"
+                    onClick={() =>
+                      update((s) => consentContact(s, c.id, "theirs", true))
+                    }
+                  >
+                    Đối phương đồng ý · {c.name}
+                  </button>
+                  <button
+                    className="text-btn"
+                    onClick={() =>
+                      update((s) => consentContact(s, c.id, "theirs", false))
+                    }
+                  >
+                    Đối phương thu hồi · {c.name}
+                  </button>
+                </div>
+              ))}
+          </details>
           {confirm ? (
             <div className="inline-actions">
               <p>Xóa tiến trình hiện tại?</p>

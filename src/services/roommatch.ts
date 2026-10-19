@@ -6,6 +6,7 @@ import type {
   Profile,
 } from "@/shared/lib/models";
 import { people } from "@/features/roommatch/mocks/people";
+import { feeAmount } from "@/features/listings/lib/fees";
 import { cost } from "@/features/listings/lib/cost";
 import { delay } from "./latency";
 const weights: Record<Criterion, number> = {
@@ -40,18 +41,21 @@ const multiplier: Record<Importance, number> = {
 };
 export const geometricScore = (ab: number, ba: number) =>
   Math.round(Math.sqrt(ab * ba));
+export function sharedAreas(a: Profile, b: Profile) {
+  return a.areas.filter((x) => b.areas.includes(x));
+}
 function signals(a: Profile, b: Profile): Record<Criterion, number> {
   const overlap = Math.max(0, Math.min(a.max, b.max) - Math.max(a.min, b.min));
   const width = Math.min(a.max - a.min, b.max - b.min);
   return {
-    area: a.area === b.area ? 1 : 0,
+    area: sharedAreas(a, b).length / Math.max(1, a.areas.length),
     budget:
       width === 0
         ? a.min <= b.max && b.min <= a.max
           ? 1
           : 0
         : overlap / width,
-    lease: a.months === b.months ? 1 : 0.5,
+    lease: a.months === b.months && a.monthsMax === b.monthsMax ? 1 : 0.5,
     sleep:
       a.sleep === b.sleep
         ? 1
@@ -60,7 +64,7 @@ function signals(a: Profile, b: Profile): Record<Criterion, number> {
           : 0.1,
     tidy: 1 - Math.abs(a.tidy - b.tidy) / 4,
     smoking: a.noSmoke && b.smoke ? 0 : 1,
-    guests: 1 - Math.abs(a.guests - b.guests) / 3,
+    guests: b.guests <= a.guestsMax ? 1 : 0,
     noise: a.quiet ? (b.noise === 1 ? 1 : b.noise === 2 ? 0.5 : 0) : 1,
     food: a.food === b.food ? 1 : 0.5,
     pets: !a.acceptPets && b.pets ? 0 : 1,
@@ -79,12 +83,28 @@ export function directionalScore(a: Profile, b: Profile) {
 }
 export function incompatibilities(a: Profile, b: Profile) {
   const reasons: string[] = [];
-  if (a.gender !== b.gender) reasons.push("Khác giới tính tự khai");
-  if (a.area !== b.area) reasons.push("Không giao khu vực");
+  if (a.gender !== b.gender) reasons.push("Khác giới tính danh tính mẫu");
+  if (!sharedAreas(a, b).length) reasons.push("Không giao khu vực");
+  if (
+    !sharedAreas(a, b).some(
+      (x) =>
+        a.commuteSamples[x] !== undefined &&
+        b.commuteSamples[x] !== undefined &&
+        a.commuteSamples[x] <= a.commuteMax &&
+        b.commuteSamples[x] <= b.commuteMax,
+    )
+  )
+    reasons.push("Không có cụm đạt giới hạn đi lại mẫu của cả hai");
+  if (a.view && b.view && a.view !== b.view) reasons.push("Khác view bắt buộc");
   if (a.min > b.max || b.min > a.max) reasons.push("Không giao ngân sách");
   if (a.moveFrom > b.moveTo || b.moveFrom > a.moveTo)
     reasons.push("Không giao ngày vào ở");
-  if (a.months !== b.months) reasons.push("Không khớp thời hạn");
+  if (a.months > b.monthsMax || b.months > a.monthsMax)
+    reasons.push("Không giao thời hạn");
+  if (a.alcohol > b.alcoholMax || b.alcohol > a.alcoholMax)
+    reasons.push("Vượt mức chấp nhận rượu bia");
+  if (a.floorMin > b.floorMax || b.floorMin > a.floorMax)
+    reasons.push("Không giao khoảng tầng mong muốn");
   if (a.scenario === "Đã có phòng" && b.scenario === "Đã có phòng")
     reasons.push("Cả hai đã có phòng");
   if ((a.noSmoke && b.smoke) || (b.noSmoke && a.smoke))
@@ -95,8 +115,18 @@ export function incompatibilities(a: Profile, b: Profile) {
     ba = signals(b, a);
   for (const key of Object.keys(weights) as Criterion[])
     if (
-      (a.importance[key] === "must" && ab[key] < 1) ||
-      (b.importance[key] === "must" && ba[key] < 1)
+      (a.importance[key] === "must" &&
+        (key === "budget"
+          ? false
+          : key === "area" || key === "lease"
+            ? ab[key] <= 0
+            : ab[key] < 1)) ||
+      (b.importance[key] === "must" &&
+        (key === "budget"
+          ? false
+          : key === "area" || key === "lease"
+            ? ba[key] <= 0
+            : ba[key] < 1))
     )
       reasons.push("Không đạt bắt buộc: " + labels[key]);
   return reasons;
@@ -106,25 +136,100 @@ export function compatibility(a: Profile, b: Profile) {
   const ab = directionalScore(a, b),
     ba = directionalScore(b, a);
   const scores = signals(a, b);
-  const good = (Object.keys(scores) as Criterion[])
-    .filter((k) => scores[k] >= 0.8)
+  const reverse = signals(b, a);
+  const detail = (k: Criterion) => {
+    const text =
+      k === "area"
+        ? `giao ${sharedAreas(a, b).join(", ")}; ưu tiên A: ${a.areas.join(" → ")}; B: ${b.areas.join(" → ")}`
+        : k === "sleep"
+          ? `${a.sleep} ↔ ${b.sleep}`
+          : k === "budget"
+            ? `${Math.max(a.min, b.min)}–${Math.min(a.max, b.max)} đ/người`
+            : k === "lease"
+              ? `${Math.max(a.months, b.months)}–${Math.min(a.monthsMax, b.monthsMax)} tháng`
+              : k === "tidy"
+                ? `${a.tidy}/5 ↔ ${b.tidy}/5`
+                : k === "guests"
+                  ? `tần suất ${a.guests}/${b.guests}; chấp nhận ${a.guestsMax}/${b.guestsMax}`
+                  : k === "noise"
+                    ? `mức ồn ${a.noise}/${b.noise}; cần yên tĩnh ${a.quiet ? "có" : "không"}/${b.quiet ? "có" : "không"}`
+                    : k === "smoking"
+                      ? `hút thuốc ${a.smoke ? "có" : "không"}/${b.smoke ? "có" : "không"}`
+                      : k === "food"
+                        ? `${a.food} ↔ ${b.food}`
+                        : `nuôi thú ${a.pets ? "có" : "không"}/${b.pets ? "có" : "không"}`;
+    return `${labels[k]}: ${text} · A→B ${Math.round(scores[k] * 100)}%, B→A ${Math.round(reverse[k] * 100)}%`;
+  };
+  const keys = Object.keys(scores) as Criterion[];
+  const good = keys
+    .filter((k) => Math.min(scores[k], reverse[k]) === 1)
     .sort((x, y) => weights[y] - weights[x])
     .slice(0, 3)
-    .map((k) => labels[k] + ": phù hợp");
-  const different = (Object.keys(scores) as Criterion[])
-    .filter((k) => scores[k] < 0.8)
-    .sort((x, y) => scores[x] - scores[y])
+    .map(detail);
+  const different = keys
+    .filter((k) => Math.min(scores[k], reverse[k]) < 1)
+    .sort(
+      (x, y) =>
+        Math.min(scores[x], reverse[x]) - Math.min(scores[y], reverse[y]),
+    )
     .slice(0, 2)
-    .map((k) => labels[k] + ": cần trao đổi thêm");
+    .map(detail);
   return {
+    qualifies: true,
     score: ab === null || ba === null ? null : geometricScore(ab, ba),
     ab,
     ba,
     good,
     different,
+    sharedAreas: sharedAreas(a, b),
+    signals: scores,
+    reverseSignals: reverse,
   };
 }
 export function validateProfile(p: Profile, state?: DemoState) {
+  if (
+    !p.areas.length ||
+    p.areas.length > 5 ||
+    new Set(p.areas).size !== p.areas.length
+  )
+    throw new Error("Chọn từ 1 đến 5 khu vực khác nhau.");
+  if (
+    p.months < 1 ||
+    p.monthsMax < p.months ||
+    p.floorMin > p.floorMax ||
+    ![15, 30, 45, 60].includes(p.commuteMax)
+  )
+    throw new Error("Thời hạn, tầng hoặc thời gian di chuyển chưa hợp lệ.");
+  if (
+    p.areas.some(
+      (x) => !Number.isFinite(p.commuteSamples[x]) || p.commuteSamples[x] < 0,
+    )
+  )
+    throw new Error("Hãy khai thời gian di chuyển mẫu cho từng khu vực.");
+  if (
+    !["Đã có phòng", "Chưa có phòng"].includes(p.scenario) ||
+    !["Nữ", "Nam"].includes(p.gender) ||
+    !Number.isInteger(p.vacancies) ||
+    p.vacancies < 1 ||
+    !Number.isInteger(p.months) ||
+    !Number.isInteger(p.monthsMax) ||
+    p.monthsMax > 60 ||
+    p.maxDepositMonths < 0 ||
+    p.maxElectricity < 0 ||
+    p.maxExtraFees < 0 ||
+    p.interests.length > 5 ||
+    p.bio.length > 300 ||
+    [
+      p.tidy,
+      p.noise,
+      p.guests,
+      p.guestsMax,
+      p.alcohol,
+      p.alcoholMax,
+      p.roomNoiseMax,
+    ].some((x) => !Number.isInteger(x) || x < 1 || x > 5)
+  )
+    throw new Error("Các mức lựa chọn của hồ sơ chưa hợp lệ.");
   if (!p.name.trim() || !p.area || !p.gender || p.bio.trim().length < 10)
     throw new Error("Hãy điền đủ thông tin bắt buộc.");
   if (
@@ -140,9 +245,16 @@ export function validateProfile(p: Profile, state?: DemoState) {
     !/^\d{4}-\d{2}-\d{2}$/.test(p.moveTo) ||
     Number.isNaN(Date.parse(p.moveFrom)) ||
     Number.isNaN(Date.parse(p.moveTo)) ||
+    new Date(p.moveFrom).toISOString().slice(0, 10) !== p.moveFrom ||
+    new Date(p.moveTo).toISOString().slice(0, 10) !== p.moveTo ||
     p.moveFrom > p.moveTo
   )
     throw new Error("Khoảng ngày vào ở chưa hợp lệ.");
+  if (
+    state?.identity?.verified &&
+    (p.gender !== state.identity.gender || p.name !== state.identity.name)
+  )
+    throw new Error("Danh tính mẫu đã xác minh là chỉ đọc.");
   if (
     p.scenario === "Đã có phòng" &&
     (!p.roomId ||
@@ -151,6 +263,15 @@ export function validateProfile(p: Profile, state?: DemoState) {
       ))
   )
     throw new Error("Hãy liên kết một phòng đang hiển thị.");
+  if (p.scenario === "Đã có phòng" && state) {
+    const room = state.listings.find((r) => r.id === p.roomId)!;
+    if (!p.areas.includes(room.area))
+      throw Error("Khu vực muốn ở phải chứa khu vực phòng liên kết.");
+    if (p.vacancies >= room.capacity)
+      throw Error(
+        "Chỗ trống phải nhỏ hơn sức chứa, còn ít nhất một người đang ở.",
+      );
+  }
 }
 function eligible(state: DemoState, p: Person) {
   if (
@@ -172,23 +293,71 @@ function eligible(state: DemoState, p: Person) {
       (r) => r.id === owner.roomId && r.status === "published",
     );
     const seeker = owner === p ? state.profile : p;
-    if (!room || room.capacity < 2) return false;
-    const total = cost(room, room.capacity);
+    if (
+      !room ||
+      room.capacity < 2 ||
+      owner.vacancies < 1 ||
+      owner.vacancies >= room.capacity
+    )
+      return false;
+    if (
+      !seeker.areas.includes(room.area) ||
+      !owner.areas.includes(room.area) ||
+      !sharedAreas(owner, seeker).includes(room.area)
+    )
+      return false;
+    if (
+      owner.commuteSamples[room.area] > owner.commuteMax ||
+      seeker.commuteSamples[room.area] > seeker.commuteMax
+    )
+      return false;
+    for (const requirements of [owner, seeker]) {
+      if (
+        room.floor === undefined ||
+        room.floor < requirements.floorMin ||
+        room.floor > requirements.floorMax ||
+        (requirements.elevator && !room.elevator) ||
+        (requirements.view && room.view !== requirements.view) ||
+        room.roomNoise === undefined ||
+        room.roomNoise > requirements.roomNoiseMax ||
+        requirements.requiredAmenities.some(
+          (x) => !room.amenities.includes(x),
+        ) ||
+        (room.depositMonths ?? 1) > requirements.maxDepositMonths ||
+        (feeAmount(room, "electricity") ?? Infinity) >
+          requirements.maxElectricity
+      )
+        return false;
+    }
+    if ((room.leaseMonths ?? 6) > Math.min(owner.monthsMax, seeker.monthsMax))
+      return false;
+    const total = cost(room, room.capacity - owner.vacancies + 1);
     if (
       !total.complete ||
+      total.total > owner.max ||
+      total.total < owner.min ||
+      total.extras > owner.maxExtraFees ||
       total.total > seeker.max ||
-      (!room.pets && seeker.pets)
+      total.total < seeker.min ||
+      total.extras > seeker.maxExtraFees ||
+      (seeker.pets &&
+        !(room.allowedPets ?? (room.pets ? ["cat", "dog"] : [])).includes(
+          seeker.petType,
+        ))
     )
       return false;
   }
   return true;
 }
 export function getDeck(state: DemoState, tab: string) {
-  validateProfile(state.profile, state);
+  if (tab !== "matches") validateProfile(state.profile, state);
   return people
     .filter(
       (p) =>
-        eligible(state, p) &&
+        (tab === "matches"
+          ? !state.blocked.includes(p.id) &&
+            !state.hiddenProfiles.includes(p.id)
+          : eligible(state, p)) &&
         (tab === "likes"
           ? state.likes.includes(p.id)
           : tab === "matches"
@@ -199,7 +368,19 @@ export function getDeck(state: DemoState, tab: string) {
     )
     .map((person) => ({
       person,
-      result: compatibility(state.profile, person)!,
+      result: compatibility(state.profile, person) ?? {
+        qualifies: false,
+        score: null,
+        ab: null,
+        ba: null,
+        good: [],
+        different: [
+          "Nhu cầu hiện tại đã thay đổi; kết nối cũ được giữ để trao đổi lại.",
+        ],
+        sharedAreas: sharedAreas(state.profile, person),
+        signals: signals(state.profile, person),
+        reverseSignals: signals(person, state.profile),
+      },
     }))
     .sort((a, b) => (b.result.score ?? 0) - (a.result.score ?? 0));
 }
@@ -216,13 +397,31 @@ export function swipe(
     !eligible(state, p)
   )
     throw new Error("Hồ sơ không còn đáp ứng điều kiện kết nối.");
+  const lastSwipe = {
+    id,
+    likes: [...state.likes],
+    passed: [...state.passed],
+    conversationIds: state.conversations.map((c) => c.id),
+  };
+  if (
+    action === "pass" &&
+    state.conversations.some((c) => c.id === "match-" + id && !c.ended)
+  )
+    throw new Error(
+      "Hãy hủy Match trong hội thoại; bỏ qua không kết thúc một kết nối đang hoạt động.",
+    );
   if (action === "pass")
-    return { ...state, passed: [...new Set([...state.passed, id])] };
-  if (state.likes.includes(id))
-    return { ...state, likes: state.likes.filter((x) => x !== id) };
+    return {
+      ...state,
+      lastSwipe,
+      likes: state.likes.filter((x) => x !== id),
+      passed: [...new Set([...state.passed, id])],
+    };
+  if (state.likes.includes(id)) return state;
   const matchId = "match-" + id;
   return {
     ...state,
+    lastSwipe,
     likes: [...state.likes, id],
     conversations:
       p.likesYou && !state.conversations.some((c) => c.id === matchId)
@@ -245,6 +444,28 @@ export function swipe(
             },
           ]
         : state.conversations,
+  };
+}
+export function undoSwipe(s: DemoState): DemoState {
+  const last = s.lastSwipe;
+  if (!last) throw new Error("Không có lượt gần nhất để hoàn tác.");
+  if (
+    s.blocked.includes(last.id) ||
+    s.conversations.some(
+      (c) =>
+        c.id === "match-" + last.id &&
+        (c.ended || c.messages.some((m) => m.mine)),
+    )
+  )
+    throw new Error("Không hoàn tác kết nối đã kết thúc hoặc đã gửi tin.");
+  return {
+    ...s,
+    likes: last.likes,
+    passed: last.passed,
+    conversations: s.conversations.filter(
+      (c) => last.conversationIds.includes(c.id) || c.id !== "match-" + last.id,
+    ),
+    lastSwipe: undefined,
   };
 }
 export const roommatchService = {

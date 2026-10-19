@@ -26,7 +26,7 @@ export function RoomCard({
         </Link>
         <span className="image-badge">
           <span className="live-dot" />{" "}
-          {room.electricity === null ? "Cần hỏi thêm" : "Chi phí rõ ràng"}
+          {!c.complete ? "Cần hỏi thêm" : "Chi phí rõ ràng"}
         </span>
         <button
           aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}

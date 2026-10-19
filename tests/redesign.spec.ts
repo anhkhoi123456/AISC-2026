@@ -1,3 +1,4 @@
+import { finishDemoLogin } from "./helpers";
 import { test, expect, type Page } from "@playwright/test";
 async function noOverflow(page: Page) {
   expect(
@@ -12,6 +13,7 @@ async function tenant(page: Page) {
     .getByRole("combobox", { name: "Vai trò demo", exact: true })
     .selectOption("tenant");
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await finishDemoLogin(page);
 }
 for (const theme of ["light", "dark"] as const)
   for (const width of [390, 1440])
@@ -99,7 +101,9 @@ for (const theme of ["light", "dark"] as const)
         .getByRole("button", { name: "Gửi tin nhắn", exact: true })
         .click();
       await expect(
-        page.getByText("Mình muốn hỏi thêm về phòng mẫu.", { exact: true }),
+        page
+          .locator(".chat-messages")
+          .getByText("Mình muốn hỏi thêm về phòng mẫu.", { exact: true }),
       ).toBeVisible();
       await noOverflow(page);
       await page.screenshot({

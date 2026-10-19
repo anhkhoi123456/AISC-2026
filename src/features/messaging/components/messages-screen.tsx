@@ -1,6 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  consentContact,
+  contactShared,
+  displayMessage,
+  safetyWarnings,
+} from "@/services/chat-safety";
 import { sendMessage } from "@/services/messages";
 import { useDemo, uid } from "@/shared/lib/demo-store";
 import {
@@ -77,6 +83,14 @@ function Messages() {
                       : c.type === "roommatch"
                         ? "Kết nối RoomMatch"
                         : "Trao đổi về phòng"}
+                    {c.messages.length > 0 && (
+                      <span>
+                        {displayMessage(
+                          c,
+                          c.messages[c.messages.length - 1].text,
+                        ).slice(0, 70)}
+                      </span>
+                    )}
                   </small>
                 </span>
                 <Icon name="chevron" size={15} />
@@ -117,7 +131,12 @@ function Messages() {
             <div className="chat-messages" aria-live="polite">
               {chat.messages.map((m) => (
                 <div className={`message ${m.mine ? "mine" : ""}`} key={m.id}>
-                  <p>{m.text}</p>
+                  <p>{displayMessage(chat, m.text)}</p>
+                  {safetyWarnings(m.text).map((w) => (
+                    <div className="chat-rule-warning" role="note" key={w}>
+                      {w}
+                    </div>
+                  ))}
                   <small>
                     {m.time}
                     {m.mine ? " · Đã lưu demo" : ""}
@@ -125,6 +144,39 @@ function Messages() {
                 </div>
               ))}
             </div>
+            {!chat.ended && (
+              <div className="chat-safety contact-consent">
+                <button
+                  className="btn outline"
+                  onClick={() => setAction("share")}
+                >
+                  Chia sẻ liên hệ
+                </button>
+                <span>
+                  {contactShared(chat)
+                    ? "Cả hai đã đồng ý; có thể thu hồi."
+                    : chat.sharing?.mine
+                      ? "Bạn đã đồng ý; đang chờ đối phương."
+                      : "Liên hệ được che đến khi cả hai đồng ý."}
+                </span>
+                {chat.sharing?.mine && (
+                  <button
+                    className="text-btn"
+                    onClick={() =>
+                      command((s) => consentContact(s, chat.id, "mine", false))
+                    }
+                  >
+                    Thu hồi đồng ý
+                  </button>
+                )}
+              </div>
+            )}
+            {text &&
+              safetyWarnings(text).map((w) => (
+                <p role="status" className="warning" key={w}>
+                  {w}
+                </p>
+              ))}
             {!chat.ended && (
               <div className="chat-suggestions">
                 {(chat.type === "listing"
@@ -181,16 +233,27 @@ function Messages() {
       {action && chat && (
         <Modal
           title={
-            action === "block"
-              ? "Chặn kết nối này?"
-              : "Kết thúc cuộc trò chuyện?"
+            action === "share"
+              ? "Đồng ý chia sẻ liên hệ?"
+              : action === "block"
+                ? "Chặn kết nối này?"
+                : "Kết thúc cuộc trò chuyện?"
           }
           onClose={() => setAction("")}
         >
-          <p>
-            Tin nhắn cũ vẫn được lưu trong demo. Quyền gửi tin mới sẽ đóng; bỏ
-            chặn không tự mở lại kết nối.
-          </p>
+          {action === "share" ? (
+            <p>
+              Chỉ mở nội dung liên hệ được nhận diện khi cả hai đồng ý. Đối
+              phương là nhân vật mẫu; mô phỏng sự đồng ý của họ trong Công cụ
+              demo. Che trên frontend không bảo vệ dữ liệu trong localStorage
+              hoặc thay thế bảo mật backend.
+            </p>
+          ) : (
+            <p>
+              Tin nhắn cũ vẫn được lưu trong demo. Quyền gửi tin mới sẽ đóng; bỏ
+              chặn không tự mở lại kết nối.
+            </p>
+          )}
           <div className="form-actions">
             <button className="btn outline" onClick={() => setAction("")}>
               Quay lại
@@ -198,6 +261,11 @@ function Messages() {
             <button
               className="btn danger-btn"
               onClick={() => {
+                if (action === "share") {
+                  command((s) => consentContact(s, chat.id, "mine"));
+                  setAction("");
+                  return;
+                }
                 update((s) => ({
                   ...s,
                   blocked:

@@ -23,7 +23,7 @@ export function LoginScreen() {
     update((s) => ({
       ...s,
       name: name.trim() || "Minh Anh",
-      role: "tenant",
+      role: s.role === "guest" ? "tenant" : s.role,
       status: s.status === "active" ? "active" : "pending",
     }));
     if (data.status === "active") router.push(destination);
@@ -77,6 +77,29 @@ export function LoginScreen() {
                 ? "Tạo hồ sơ mẫu để khám phá nơi ở tiếp theo."
                 : "Đăng nhập để lưu phòng và kết nối bạn ở ghép."}
             </p>
+            {data.role === "admin" ? (
+              <p className="info-note">
+                Vai trò vận hành đã được chọn trong Công cụ demo.
+              </p>
+            ) : (
+              <>
+                <label>
+                  Vai trò đăng nhập
+                  <select
+                    value={data.role === "guest" ? "tenant" : data.role}
+                    onChange={(e) =>
+                      update((s) => ({
+                        ...s,
+                        role: e.target.value as "tenant" | "landlord" | "admin",
+                      }))
+                    }
+                  >
+                    <option value="tenant">Người thuê</option>
+                    <option value="landlord">Chủ trọ</option>
+                  </select>
+                </label>
+              </>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault();

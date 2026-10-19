@@ -6,7 +6,8 @@ import { Guard, PageTitle, Empty } from "@/shared/components/ui";
 import { Icon } from "@/shared/components/icon";
 import { areas, roomImages } from "../mocks/listings";
 import { money } from "../lib/cost";
-import type { Listing, ListingStatus } from "@/shared/lib/models";
+import { fee, feeKeys, feeLabels, feeStatusLabels } from "../lib/fees";
+import type { Fee, FeeKey, Listing, ListingStatus } from "@/shared/lib/models";
 import { statusLabels, canSubmit } from "../lib/status";
 export function ManageScreen() {
   return (
@@ -181,8 +182,8 @@ function Manage() {
       )}
       <p className="info-note">
         Tin gửi duyệt chưa xuất hiện trong tìm kiếm. Bạn có thể thử duyệt tại{" "}
-        <Link href="/admin">không gian vận hành demo</Link>. Lịch nhắc sau 7
-        ngày và tự ẩn sau 14 ngày chưa chạy trong frontend.
+        Công cụ demo trên header. Lịch nhắc sau 7 ngày và tự ẩn sau 14 ngày chưa
+        chạy trong frontend.
       </p>
     </main>
   );
@@ -203,6 +204,33 @@ function ListingForm() {
   );
   const existing = data.listings.find((r) => r.id === id && r.owner === "Bạn");
   const [image, setImage] = useState(existing?.image ?? roomImages[0]);
+  const [fees, setFees] = useState<Partial<Record<FeeKey, Fee>>>(
+    Object.fromEntries(
+      feeKeys.map((k) => [
+        k,
+        existing
+          ? fee(existing, k)
+          : {
+              status: [
+                "management",
+                "extraGuest",
+                "laundry",
+                "transfer",
+              ].includes(k)
+                ? "unknown"
+                : "charged",
+              amount:
+                k === "electricity"
+                  ? 3500
+                  : k === "water"
+                    ? 60000
+                    : k === "cleaning"
+                      ? 40000
+                      : 100000,
+            },
+      ]),
+    ),
+  );
   const [submitted, setSubmitted] = useState(false);
   function save(form: HTMLFormElement, status: ListingStatus) {
     const f = new FormData(form);
@@ -212,6 +240,26 @@ function ListingForm() {
       area: String(f.get("area")),
       address: String(f.get("address")),
       image,
+      feeStates: Object.fromEntries(
+        feeKeys.map((k) => [
+          k,
+          {
+            status: fees[k]!.status,
+            amount:
+              fees[k]!.status === "charged"
+                ? Number(f.get(k))
+                : fees[k]!.status === "unknown"
+                  ? null
+                  : 0,
+          },
+        ]),
+      ),
+      depositMonths: Number(f.get("depositMonths")),
+      allowedPets: f.getAll("allowedPets").map(String) as ("cat" | "dog")[],
+      floor: Number(f.get("floor")),
+      elevator: f.get("elevator") === "on",
+      view: String(f.get("view")),
+      roomNoise: Number(f.get("roomNoise")),
       price: Number(f.get("price")),
       size: Number(f.get("size")),
       capacity: Number(f.get("capacity")),
@@ -221,7 +269,7 @@ function ListingForm() {
         f.get("electricity") === "" ? null : Number(f.get("electricity")),
       water: Number(f.get("water")),
       parking: Number(f.get("parking")),
-      pets: f.get("pets") === "on",
+      pets: f.getAll("allowedPets").length > 0,
       amenities: f.getAll("amenities").map(String),
       status,
       owner: "Bạn",
@@ -383,35 +431,117 @@ function ListingForm() {
         </label>
         <h2>Từng khoản phí, từng đơn vị</h2>
         <p className="muted">
-          Giá 0 nghĩa là đã gồm/không thu thêm. Riêng điện để trống nghĩa là
-          chưa rõ. Cọc mẫu bằng một tháng tiền phòng.
+          Chọn riêng trạng thái từng khoản. Chưa khai báo không được coi là miễn
+          phí. Các khoản phụ thu là mức ước tính theo tháng; chuyển nhượng là
+          khoản một lần.
         </p>
         <div className="form-grid">
-          {(
-            [
-              ["internet", "Internet / phòng / tháng", 100000],
-              ["cleaning", "Vệ sinh / phòng / tháng", 40000],
-              ["electricity", "Điện / kWh (được để trống)", 3500],
-              ["water", "Nước / người / tháng", 60000],
-              ["parking", "Giữ xe / xe / tháng", 100000],
-            ] as const
-          ).map(([name, label, value]) => (
-            <label key={name}>
-              {label}
-              <input
-                type="number"
-                name={name}
-                min="0"
-                required={name !== "electricity"}
-                defaultValue={existing ? (existing[name] ?? "") : value}
-              />
-            </label>
+          {feeKeys.map((k) => (
+            <div key={k}>
+              <label>
+                {feeLabels[k]} — trạng thái
+                <select
+                  aria-label={feeLabels[k] + " — trạng thái"}
+                  value={fees[k]!.status}
+                  onChange={(e) =>
+                    setFees({
+                      ...fees,
+                      [k]: {
+                        ...fees[k]!,
+                        status: e.target.value as Fee["status"],
+                      },
+                    })
+                  }
+                >
+                  {Object.entries(feeStatusLabels).map(([v, t]) => (
+                    <option key={v} value={v}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {feeLabels[k]}
+                <input
+                  type="number"
+                  name={k}
+                  min="1"
+                  required={fees[k]!.status === "charged"}
+                  disabled={fees[k]!.status !== "charged"}
+                  defaultValue={fees[k]!.amount ?? ""}
+                />
+              </label>
+            </div>
           ))}
         </div>
-        <label className="check-label">
-          <input name="pets" type="checkbox" defaultChecked={existing?.pets} />
-          Cho phép nuôi thú cưng
+        <label>
+          Số tháng cọc
+          <input
+            type="number"
+            name="depositMonths"
+            min="0"
+            max="12"
+            required
+            defaultValue={existing?.depositMonths ?? 1}
+          />
         </label>
+        <div className="form-grid">
+          <label>
+            Tầng
+            <input
+              type="number"
+              name="floor"
+              min="0"
+              max="30"
+              defaultValue={existing?.floor ?? 0}
+            />
+          </label>
+          <label>
+            View
+            <select name="view" defaultValue={existing?.view ?? "Cửa sổ"}>
+              {["Ban công", "Cửa sổ", "Trong hẻm", "Nội khu"].map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Mức ồn phòng (1–4)
+            <input
+              type="number"
+              min="1"
+              max="4"
+              name="roomNoise"
+              defaultValue={existing?.roomNoise ?? 2}
+            />
+          </label>
+        </div>
+        <label className="check-label">
+          <input
+            type="checkbox"
+            name="elevator"
+            defaultChecked={existing?.elevator}
+          />
+          Có thang máy
+        </label>
+        <fieldset>
+          <legend>Loại thú cưng được phép</legend>
+          {[
+            ["cat", "Mèo"],
+            ["dog", "Chó"],
+          ].map(([v, t]) => (
+            <label className="check-label" key={v}>
+              <input
+                type="checkbox"
+                name="allowedPets"
+                value={v}
+                defaultChecked={existing?.allowedPets?.includes(
+                  v as "cat" | "dog",
+                )}
+              />
+              {t}
+            </label>
+          ))}
+        </fieldset>
         <div className="amenity-checks">
           {[
             "Máy lạnh",
@@ -420,6 +550,7 @@ function ListingForm() {
             "Bếp riêng",
             "Nội thất",
             "Chỗ để xe",
+            "Cửa sổ",
           ].map((a) => (
             <label className="check-label" key={a}>
               <input

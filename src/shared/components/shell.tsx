@@ -95,7 +95,6 @@ function Navigation({ children }: { children: ReactNode }) {
               ["/quan-ly-tin", "Quản lý tin"],
               ["/tai-khoan", "Tài khoản"],
               ["/yeu-thich", "Yêu thích"],
-              ["/hop-dong", "Hỗ trợ đọc hợp đồng"],
             ].map(([href, label]) => (
               <Link key={href} href={href} onClick={() => setOpen(false)}>
                 {label}
@@ -125,7 +124,6 @@ function Navigation({ children }: { children: ReactNode }) {
           <div>
             <Link href="/tim-phong">Tìm nơi ở</Link>
             <Link href="/roommatch">Tìm bạn ở ghép</Link>
-            <Link href="/admin">Không gian vận hành demo</Link>
             <Link href="/hop-dong">Đọc hợp đồng mẫu</Link>
           </div>
           <small>© 2026 AnTro · Dành cho những khởi đầu mới.</small>

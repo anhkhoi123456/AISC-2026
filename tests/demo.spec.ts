@@ -1,3 +1,4 @@
+import { publishProfile } from "./helpers";
 import { test, expect } from "@playwright/test";
 let runtimeErrors: string[] = [];
 test.beforeEach(async ({ page }) => {
@@ -57,9 +58,7 @@ test("verification, saved listing, mutual match, persistent chat and block", asy
     page.getByRole("button", { name: "Đã lưu tin", exact: true }),
   ).toBeVisible();
   await page.goto("/roommatch/ho-so");
-  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
-  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
-  await page.getByRole("button", { name: "Bật hiển thị hồ sơ" }).click();
+  await publishProfile(page);
   const linh = page.locator(".person-card").filter({ hasText: "Ngọc Linh" });
   await linh.getByRole("button", { name: "Quan tâm", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -69,11 +68,15 @@ test("verification, saved listing, mutual match, persistent chat and block", asy
     .fill("Chào Linh, mình cùng xem phòng nhé!");
   await page.getByRole("button", { name: "Gửi tin nhắn", exact: true }).click();
   await expect(
-    page.getByText("Chào Linh, mình cùng xem phòng nhé!"),
+    page
+      .locator(".chat-messages")
+      .getByText("Chào Linh, mình cùng xem phòng nhé!"),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("Chào Linh, mình cùng xem phòng nhé!"),
+    page
+      .locator(".chat-messages")
+      .getByText("Chào Linh, mình cùng xem phòng nhé!"),
   ).toBeVisible();
   await page.getByRole("button", { name: "Chặn", exact: true }).click();
   await page.getByRole("button", { name: "Xác nhận", exact: true }).click();
@@ -156,6 +159,12 @@ for (const width of [390, 1440])
 test("moderation hides a reported listing and restores it after review", async ({
   page,
 }) => {
+  await page.goto("/phong/phong-gan-ktx");
+  const base = Number(
+    await page
+      .locator(".trust-number")
+      .evaluate((el) => el.childNodes[0].textContent),
+  );
   await page.goto("/admin");
   await page.getByRole("button", { name: "Mở bảng vận hành demo" }).click();
   await page.getByRole("button", { name: "Báo cáo & khiếu nại" }).click();
@@ -166,6 +175,14 @@ test("moderation hides a reported listing and restores it after review", async (
   await page.getByRole("button", { name: "Lưu quyết định" }).click();
   await page.goto("/tim-phong");
   await expect(page.locator(".room-card")).toHaveCount(2);
+  await page.goto("/phong/phong-gan-ktx");
+  expect(
+    Number(
+      await page
+        .locator(".trust-number")
+        .evaluate((el) => el.childNodes[0].textContent),
+    ),
+  ).toBe(base - 10);
   await page.goto("/admin");
   await page.getByRole("button", { name: "Mở bảng vận hành demo" }).click();
   await page.getByRole("button", { name: "Báo cáo & khiếu nại" }).click();
@@ -178,4 +195,12 @@ test("moderation hides a reported listing and restores it after review", async (
   await page.getByRole("button", { name: "Lưu quyết định" }).click();
   await page.goto("/tim-phong");
   await expect(page.locator(".room-card")).toHaveCount(3);
+  await page.goto("/phong/phong-gan-ktx");
+  expect(
+    Number(
+      await page
+        .locator(".trust-number")
+        .evaluate((el) => el.childNodes[0].textContent),
+    ),
+  ).toBe(base);
 });

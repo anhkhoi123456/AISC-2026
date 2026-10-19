@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useDemo, uid } from "@/shared/lib/demo-store";
 import { Icon } from "@/shared/components/icon";
 import { Empty, ReportButton } from "@/shared/components/ui";
+import { fee, feeKeys, feeLabels, feeStatusLabels } from "../lib/fees";
 import { cost, money } from "../lib/cost";
 export function DetailScreen({ id }: { id: string }) {
   const { data, update } = useDemo();
@@ -137,7 +138,12 @@ export function DetailScreen({ id }: { id: string }) {
               ))}
               <span>
                 <Icon name={room.pets ? "check" : "close"} size={17} />
-                {room.pets ? "Được nuôi thú cưng" : "Không nuôi thú cưng"}
+                {room.pets
+                  ? "Được nuôi: " +
+                    (room.allowedPets ?? [])
+                      .map((x) => (x === "cat" ? "mèo" : "chó"))
+                      .join(", ")
+                  : "Không nuôi thú cưng"}
               </span>
             </div>
           </section>
@@ -192,40 +198,51 @@ export function DetailScreen({ id }: { id: string }) {
               </label>
             </div>
             <div className="cost-table">
-              {[
-                [
-                  "Tiền phòng",
-                  `${money(room.price)} / phòng`,
-                  money(room.price / n),
-                ],
-                [
-                  "Internet",
-                  `${money(room.internet)} / phòng`,
-                  money(room.internet / n),
-                ],
-                [
-                  "Vệ sinh",
-                  `${money(room.cleaning)} / phòng`,
-                  money(room.cleaning / n),
-                ],
-                [
-                  "Điện ước tính",
-                  room.electricity === null
-                    ? "Chưa khai báo"
-                    : `${money(room.electricity)} / kWh × ${kwh} kWh`,
-                  c.electric === null ? "Chưa rõ" : money(c.electric),
-                ],
-                ["Nước", `${money(room.water)} / người`, money(c.water)],
-                ["Giữ xe", `${money(room.parking)} / xe`, money(c.parking)],
-              ].map(([name, basis, total]) => (
-                <div key={name}>
-                  <span>
-                    {name}
-                    <small>{basis}</small>
-                  </span>
-                  <strong>{total}</strong>
-                </div>
-              ))}
+              <div>
+                <span>
+                  Tiền phòng<small>{money(room.price)} / phòng</small>
+                </span>
+                <strong>{money(room.price / n)}</strong>
+              </div>
+              {feeKeys.map((k) => {
+                const f = fee(room, k);
+                return (
+                  <div key={k}>
+                    <span>
+                      {feeLabels[k]}
+                      <small>
+                        {feeStatusLabels[f.status]}
+                        {f.status === "charged"
+                          ? " · " + money(f.amount ?? 0)
+                          : ""}
+                      </small>
+                    </span>
+                    <strong>
+                      {f.status === "unknown"
+                        ? "Chưa rõ"
+                        : k === "transfer"
+                          ? "Một lần"
+                          : k === "electricity"
+                            ? c.electric === null
+                              ? "Chưa rõ"
+                              : money(c.electric)
+                            : f.status === "charged"
+                              ? money(
+                                  ((f.amount ?? 0) /
+                                    ([
+                                      "internet",
+                                      "cleaning",
+                                      "management",
+                                    ].includes(k)
+                                      ? n
+                                      : 1)) *
+                                    (k === "parking" ? vehicles : 1),
+                                )
+                              : feeStatusLabels[f.status]}
+                    </strong>
+                  </div>
+                );
+              })}
               <div className="cost-total">
                 <span>
                   {c.complete ? "Tổng ước tính" : "Tổng các khoản đã biết"}
@@ -236,8 +253,8 @@ export function DetailScreen({ id }: { id: string }) {
             </div>
             {!c.complete && (
               <p className="warning">
-                Chưa đủ dữ liệu tính tổng. Hãy hỏi người đăng về giá điện trước
-                khi quyết định.
+                Chưa đủ dữ liệu tính tổng. Cần hỏi rõ các khoản:{" "}
+                {c.unknown.map((k) => feeLabels[k]).join(", ")}.
               </p>
             )}
             <div className="deposit-note">
@@ -245,8 +262,8 @@ export function DetailScreen({ id }: { id: string }) {
               <p>
                 <strong>Cọc dự kiến: {money(c.deposit)} / người</strong>
                 <br />
-                Cọc bằng 1 tháng tiền phòng, trình bày riêng. Tháng đầu và cọc:{" "}
-                {money(c.total + c.deposit)}
+                Cọc bằng {room.depositMonths ?? 1} tháng tiền phòng, trình bày
+                riêng. Tháng đầu và cọc: {money(c.total + c.deposit)}
                 {!c.complete ? " + khoản chưa rõ" : ""}. Điều kiện hoàn cọc cần
                 thống nhất với người đăng.
               </p>
@@ -257,7 +274,8 @@ export function DetailScreen({ id }: { id: string }) {
             <div className="info-note">
               Thời hạn thuê mẫu: tối thiểu {room.leaseMonths ?? 6} tháng. Hỏi rõ
               giờ giấc, khách ở lại, mức sử dụng điện nước và điều kiện chuyển
-              đi sớm. Chưa có dữ liệu giá khu vực để đối chiếu.
+              đi sớm. Xem trạng thái giá tham khảo trong khối Listing Trust phía
+              trên.
             </div>
             <ReportButton target={id} />
           </section>

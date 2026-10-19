@@ -47,8 +47,13 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (otp === "123456") setStep(1);
-              else notify("Mã demo là 123456. Bạn hãy thử lại.");
+              if (otp === "123456") {
+                update((s) => ({
+                  ...s,
+                  identity: { ...s.identity!, otp: true },
+                }));
+                setStep(1);
+              } else notify("Mã demo là 123456. Bạn hãy thử lại.");
             }}
           >
             <h2>Xác nhận số điện thoại</h2>
@@ -85,24 +90,54 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
             <p className="muted">
               Sử dụng bộ kết quả giả lập, không mở camera hoặc thu CCCD.
             </p>
-            <label>
-              Tình huống muốn trải nghiệm
-              <select
-                value={outcome}
-                onChange={(e) => setOutcome(e.target.value)}
-              >
-                <option value="active">Đạt — kích hoạt tài khoản demo</option>
-                <option value="pending">Ảnh chưa rõ — cần thử lại</option>
-                <option value="review">Cần đội vận hành duyệt thủ công</option>
-                <option value="rejected">
-                  Từ chối — thông tin mẫu không khớp
-                </option>
-              </select>
-            </label>
+            <div className="identity-sample">
+              <img
+                src="/images/person-1.jpg"
+                width="80"
+                height="80"
+                alt="Chân dung mẫu, không phải người cần xác minh"
+              />
+              <p>THẺ DANH TÍNH MẪU · Không phải CCCD thật</p>
+              <p>
+                {data.identity?.name} · {data.identity?.gender} ·{" "}
+                {data.identity?.birthYear} · {data.identity?.occupation}
+              </p>
+              <p>
+                Mã mẫu: DEMO-****. Không camera, không tải giấy tờ. Kết quả là
+                giả lập.
+              </p>
+            </div>
+            <fieldset>
+              <legend>Kịch bản kiểm tra mẫu</legend>
+              {[
+                ["active", "Mẫu hợp lệ"],
+                ["review", "Mẫu cần xem xét"],
+                ["rejected", "Mẫu không khớp"],
+              ].map(([v, t]) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={outcome === v ? "btn primary" : "btn outline"}
+                  aria-pressed={outcome === v}
+                  onClick={() => setOutcome(v)}
+                >
+                  {t}
+                </button>
+              ))}
+            </fieldset>
             <button
               className="btn primary full"
               onClick={() => {
-                update((s) => ({ ...s, status: outcome as typeof s.status }));
+                update((s) => ({
+                  ...s,
+                  status: outcome as typeof s.status,
+                  identity: { ...s.identity!, verified: outcome === "active" },
+                  profile: {
+                    ...s.profile,
+                    name: s.identity?.name ?? s.profile.name,
+                    gender: s.identity?.gender ?? s.profile.gender,
+                  },
+                }));
                 setStep(2);
               }}
             >

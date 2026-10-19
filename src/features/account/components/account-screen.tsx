@@ -14,6 +14,7 @@ const statuses = {
 };
 export function AccountScreen() {
   const { data, update, notify, reset } = useDemo();
+  const [deleting, setDeleting] = useState(false);
   const [confirm, setConfirm] = useState(false);
   if (data.status === "guest")
     return (
@@ -131,8 +132,9 @@ export function AccountScreen() {
               <summary>Vì sao Trust Score là thông tin tham khảo?</summary>
               <p>
                 Điểm tin cậy minh họa gồm xác minh, chất lượng hồ sơ và lịch sử
-                hoạt động. Chưa có điểm thực được tính trong demo. Xác minh danh
-                tính không bảo đảm quyền cho thuê hoặc hành vi của người dùng.
+                hoạt động. Điểm User Trust được tính từ bằng chứng mẫu, không
+                phải uy tín của người thật. Xác minh danh tính không bảo đảm
+                quyền cho thuê hoặc hành vi của người dùng.
               </p>
             </details>
             {data.status === "blocked" && (
@@ -164,30 +166,47 @@ export function AccountScreen() {
             <p className="muted">
               Chỉ thay đổi trạng thái mô phỏng tại trình duyệt này.
             </p>
-            <label>
-              Trạng thái tài khoản
-              <select
-                value={data.status}
-                onChange={(e) =>
-                  update((s) => ({
-                    ...s,
-                    status: e.target.value as typeof s.status,
-                  }))
-                }
-              >
-                {Object.entries(statuses)
-                  .filter(([k]) => k !== "guest")
-                  .map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <Link className="text-btn" href="/admin">
-              Mở không gian vận hành demo <Icon name="arrow" size={16} />
-            </Link>
+            <p>
+              Công cụ mô phỏng trạng thái nằm ở nút Công cụ demo trên header.
+              Xác minh thực hiện theo luồng OTP và danh tính mẫu.
+            </p>
             <hr />
+            {deleting ? (
+              <div>
+                <p>
+                  Xóa tài khoản, hồ sơ, hội thoại và bản sao lưu demo trong
+                  trình duyệt này? Thao tác không tác động máy người khác.
+                </p>
+                <button
+                  className="btn danger-btn"
+                  onClick={() => {
+                    for (const key of Object.keys(localStorage))
+                      if (key.startsWith("antro-demo"))
+                        localStorage.removeItem(key);
+                    reset();
+                    setDeleting(false);
+                    notify(
+                      "Đã xóa dữ liệu tài khoản demo và bản sao lưu cục bộ; khởi tạo lại seed khách.",
+                    );
+                  }}
+                >
+                  Xác nhận xóa dữ liệu tài khoản
+                </button>
+                <button
+                  className="btn outline"
+                  onClick={() => setDeleting(false)}
+                >
+                  Hủy xóa
+                </button>
+              </div>
+            ) : (
+              <button
+                className="btn danger-btn"
+                onClick={() => setDeleting(true)}
+              >
+                Xóa dữ liệu tài khoản demo
+              </button>
+            )}
             {confirm ? (
               <div className="inline-actions">
                 <span>Xóa toàn bộ tiến trình demo?</span>

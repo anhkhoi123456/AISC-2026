@@ -125,6 +125,34 @@ initialListings.splice(
   1,
 );
 initialListings.forEach((r, i) => {
+  r.trustEvidence ??= {
+    ownerScore: 42,
+    checkedImages: 0,
+    video: false,
+    rentalRight: false,
+    flags: [],
+    validReports: 0,
+  };
+  r.floor ??= i + 1;
+  r.elevator ??= i > 1;
+  r.view ??= i === 0 ? "Ban công" : "Cửa sổ";
+  r.roomNoise ??= 2;
+  r.depositMonths ??= 1;
+  r.allowedPets ??= r.pets ? ["cat"] : [];
+  r.feeStates ??= {
+    internet: { status: "charged", amount: r.internet },
+    cleaning: { status: "charged", amount: r.cleaning },
+    electricity: {
+      status: r.electricity === null ? "unknown" : "charged",
+      amount: r.electricity,
+    },
+    water: { status: "charged", amount: r.water },
+    parking: { status: "charged", amount: r.parking },
+    management: { status: "included", amount: 0 },
+    extraGuest: { status: "none", amount: 0 },
+    laundry: { status: "included", amount: 0 },
+    transfer: { status: "none", amount: 0 },
+  };
   r.kind ??= i % 2 === 0 ? "Phòng trọ" : "Studio";
   r.leaseMonths ??= 6;
   r.rules ??=

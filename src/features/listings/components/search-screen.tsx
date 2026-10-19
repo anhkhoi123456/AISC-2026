@@ -140,8 +140,15 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
   if (q.pets)
     chips.push({
       key: "pets",
-      label: "Thú cưng · " + (q.petMode === "must" ? "Bắt buộc" : "Ưu tiên"),
-      clear: { pets: false },
+      label:
+        (q.petType === "cat"
+          ? "Mèo"
+          : q.petType === "dog"
+            ? "Chó"
+            : "Thú cưng") +
+        " · " +
+        (q.petMode === "must" ? "Bắt buộc" : "Ưu tiên"),
+      clear: { pets: false, petType: "any" },
       field: "pets-filter",
     });
   if (q.months)
@@ -391,6 +398,7 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
                 "Bếp riêng",
                 "Nội thất",
                 "Chỗ để xe",
+                "Cửa sổ",
               ].map((a) => (
                 <option key={a}>{a}</option>
               ))}
@@ -419,6 +427,21 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
             />
             Cho nuôi thú cưng
           </label>
+          {q.pets && (
+            <label>
+              Loại thú cưng
+              <select
+                value={q.petType}
+                onChange={(e) =>
+                  change({ petType: e.target.value as "any" | "cat" | "dog" })
+                }
+              >
+                <option value="any">Thú cưng chung</option>
+                <option value="cat">Mèo</option>
+                <option value="dog">Chó</option>
+              </select>
+            </label>
+          )}
           {q.pets && (
             <label>
               Mức quan trọng thú cưng

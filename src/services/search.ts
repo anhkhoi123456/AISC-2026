@@ -4,6 +4,10 @@ import { places } from "@/features/search/mocks/places";
 import { cost } from "@/features/listings/lib/cost";
 import { trustScore } from "./trust";
 import { delay } from "./latency";
+export function allowsPet(r: Listing, type: SearchQuery["petType"]) {
+  const allowed = r.allowedPets ?? (r.pets ? ["cat", "dog"] : []);
+  return type === "any" ? allowed.length > 0 : allowed.includes(type);
+}
 export function filterListings(listings: Listing[], q: SearchQuery) {
   const exact: Listing[] = [],
     nearby: { room: Listing; reason: string }[] = [];
@@ -19,7 +23,7 @@ export function filterListings(listings: Listing[], q: SearchQuery) {
     if (q.kind && room.kind !== q.kind) reasons.push("Khác loại phòng");
     if (q.months && Number(q.months) < (room.leaseMonths ?? 6))
       reasons.push("Chưa đạt thời hạn tối thiểu");
-    if (q.pets && !room.pets && q.petMode === "must")
+    if (q.pets && !allowsPet(room, q.petType) && q.petMode === "must")
       reasons.push("Không cho thú cưng");
     if (
       q.amenity &&
@@ -32,13 +36,15 @@ export function filterListings(listings: Listing[], q: SearchQuery) {
       reasons.push(
         c.complete
           ? "Tổng ước tính vượt ngân sách đã chọn."
-          : "Chưa khai báo giá điện, chưa thể xác nhận ngân sách.",
+          : c.unknown.includes("electricity")
+            ? "Chưa khai báo giá điện, chưa thể xác nhận ngân sách."
+            : "Chưa khai báo đủ khoản phí, chưa thể xác nhận ngân sách.",
       );
     if (reasons.length) nearby.push({ room, reason: reasons.join(" · ") });
     else exact.push(room);
   }
   const preference = (r: Listing) =>
-    (q.pets && q.petMode === "prefer" && r.pets ? 1 : 0) +
+    (q.pets && q.petMode === "prefer" && allowsPet(r, q.petType) ? 1 : 0) +
     (q.amenity && q.amenityMode === "prefer" && r.amenities.includes(q.amenity)
       ? 1
       : 0);

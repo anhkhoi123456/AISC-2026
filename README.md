@@ -25,7 +25,7 @@ Webpack được chọn cho dev/build vì Turbopack không bind được tiến 
 
 ## Chuyển vai trò và xác minh
 
-Nút biểu tượng thanh chỉnh **Công cụ demo** trên header mở công cụ chuyển Khách / Người thuê / Chủ trọ / Admin. Chọn một vai trò đăng nhập sẽ kích hoạt tài khoản mẫu, không cấp quyền thật. Có thể đổi về Chưa xác minh hoặc Bị hạn chế để thử màn hình giới hạn.
+Nút **Công cụ demo** trên header chọn vai trò và dẫn tới đăng nhập → OTP → danh tính mẫu, không chuyển thẳng sang đã xác minh. Danh tính mẫu là chỉ đọc trong RoomMatch. Admin và mô phỏng consent đối phương nằm trong công cụ này; không cấp quyền thật.
 
 Trang `/dang-nhap` có form email và mật khẩu mẫu (tối thiểu 6 ký tự), hiện/ẩn mật khẩu, chuyển đăng ký và hướng dẫn quên mật khẩu mô phỏng. Vùng **Trải nghiệm demo** thu gọn cung cấp email **demo@antro.vn**, mật khẩu mẫu **Antro123!**, tên hiển thị và lối vào nhanh giữ luồng cũ; OTP **123456**. Mật khẩu nhập không được lưu hoặc gửi ra ngoài. Chọn kết quả eKYC giả lập; không mở camera hoặc nhận CCCD. `/admin` có bước xác nhận vào không gian vận hành demo. Tất cả quyền là mô phỏng frontend, không dùng để bảo vệ dữ liệu production.
 
@@ -55,7 +55,7 @@ Nút giao diện trên header có **Sáng / Tối / Theo hệ thống**, lưu ri
 
 1. **Tìm phòng (1 phút):** vào `/tim-phong`, gõ `UIT`, nhấn mũi tên xuống và Enter; cũng có thể chạm gợi ý. Thử `trường`, `metro`, `siêu thị`, `chợ`, `bệnh viện` hoặc không dấu. Câu `Gần UIT, dưới 3 triệu, cho nuôi mèo, thuê 10 tháng` tạo 4 chip. Xóa/sửa chip, đổi bộ lọc rồi refresh/Back để kiểm tra URL.
 2. **Chi phí (1 phút):** mở phòng, đổi số người và kWh/phòng. Nước theo người không bị chia lần nữa; cọc ở khoản ban đầu. Phòng gần KTX thiếu giá điện nên không được xác nhận đạt ngân sách tổng. Mở giải thích Trust Score; giá tham khảo là số giả lập, có cụm chưa đủ mẫu.
-3. **RoomMatch (2 phút):** chọn vai trò Người thuê hoặc đăng nhập bằng OTP mẫu. Tạo hồ sơ mặc định nữ, gần UIT, ngân sách 1–3 triệu, vào tháng 11/2026, thời hạn 10 tháng. Bản nháp tự giữ khi tải lại. Chọn mức quan trọng rồi bật hồ sơ. Quan tâm Thảo Vy chỉ lưu một chiều; Ngọc Linh đã quan tâm bạn theo seed nên tạo Match. Gửi tin, refresh rồi kết thúc/chặn để thấy quyền gửi đóng.
+3. **RoomMatch (2 phút):** chọn vai trò Người thuê hoặc đăng nhập bằng OTP mẫu. Tạo hồ sơ mặc định nữ, gần UIT, ngân sách 1–3 triệu, vào tháng 11/2026, thời hạn 10 tháng. Bản nháp tự giữ khi tải lại. Chọn mức quan trọng rồi bật hồ sơ. Thử bỏ qua bằng nút/vuốt/phím mũi tên rồi hoàn tác. Quan tâm Ngọc Linh (đã quan tâm bạn theo seed) để tạo Match; tiếp tục khám phá Thảo Vy để thử quan tâm một chiều, không mở chat. Gửi tin, refresh rồi kết thúc/chặn để thấy quyền gửi đóng.
 4. **Chủ trọ và vận hành (1 phút):** chọn Chủ trọ, tạo tin với ảnh sẵn có và bảng phí. Gửi duyệt chưa công khai. Chọn Admin, duyệt kèm lý do; tìm thấy tin mới. Thử báo cáo/ẩn tin và xem tin biến mất. Quyết định không đủ cơ sở sau rà soát có thể khôi phục trạng thái trước.
 5. **Hợp đồng (1 phút):** mở `/hop-dong`, chọn mẫu có điều khoản cần chú ý. Rà soát, bấm “Xem đúng đoạn văn bản” ở tăng phí/hoàn cọc/chấm dứt để đối chiếu đoạn được tô. Đây là dò từ khóa, không phải kết luận pháp lý.
 
@@ -63,9 +63,9 @@ Nút giao diện trên header có **Sáng / Tối / Theo hệ thống**, lưu ri
 
 Theo cập nhật mới nhất của chủ dự án, giữ **3 phòng công khai + 1 tin chờ duyệt và 3 hồ sơ RoomMatch**, thay cho yêu cầu 18/10 ban đầu. Có trường hợp đủ phí, thiếu giá điện, khác nhịp sống, quan tâm một/hai chiều và báo cáo mẫu. Có thể tạo thêm phòng qua giao diện; không cần sinh thêm seed.
 
-`localStorage['antro-demo-v2']` lưu `{ version: 2, data: ... }`. Kiểm tra schema cả dữ liệu lồng nhau trước khi nạp; dữ liệu hỏng/khác version được khôi phục về seed kèm thông báo. Bộ nhớ bị chặn hoặc đầy sẽ có cảnh báo, vẫn dùng được trong phiên. Phiên bản v1 cũ không tự nạp; khóa cũ được giữ nguyên. Không lưu File/Blob, chỉ tham chiếu ảnh local.
+`localStorage['antro-demo-v2']` giữ nguyên key nhưng lưu envelope `{ version: 3, data: ... }`. Có migration v2 → v3, thông báo và bản sao gốc `antro-demo-before-v3`; không âm thầm xóa dữ liệu cũ. Kiểm tra schema cả dữ liệu lồng nhau trước khi nạp; dữ liệu hỏng/khác version được khôi phục về seed kèm thông báo. Bộ nhớ bị chặn hoặc đầy sẽ có cảnh báo, vẫn dùng được trong phiên. Phiên bản v1 cũ không tự nạp; khóa cũ được giữ nguyên. Không lưu File/Blob, chỉ tham chiếu ảnh local.
 
-**Reset:** mở Công cụ demo → Đặt lại dữ liệu demo → Xác nhận đặt lại. Hoặc dùng nút xác nhận ở `/tai-khoan`. Reset xóa tiến trình của bản v2, không tác động tệp ảnh hoặc mã nguồn.
+**Reset:** mở Công cụ demo → Đặt lại dữ liệu demo → Xác nhận đặt lại. Hoặc dùng nút xác nhận ở `/tai-khoan`. Reset xóa tiến trình hiện tại, không tác động tệp ảnh hoặc mã nguồn.
 
 ## Cấu trúc và nơi thay khi nối backend
 
@@ -88,13 +88,15 @@ Các cập nhật form/quản lý tin/Admin dùng chung adapter trạng thái, p
 Đã đọc hai tài liệu Word v2.0, bản prototype 10 ngày và sơ đồ tech stack/luồng người dùng trong cuộc trò chuyện. **Chưa tìm thấy `Feature AISC.pdf` trong workspace**, nên không khẳng định đã đọc tệp đó.
 
 - Giữ Next.js thay vì tạo dự án Vite mới. Next.js quản lý URL trang; HashRouter chỉ quản lý bước trong công cụ hợp đồng.
-- Cùng giới dựa trên thông tin tự khai; không bật ghép khác giới trong demo. Chưa xác minh thông tin này.
-- Khu vực, ngân sách, ngày và thời hạn là lọc cứng. Mặc định một khu vực/hồ sơ và thời hạn cụ thể. Hai người đã có phòng không ghép nhau. Người có phòng cần liên kết tin đang hiển thị và đủ thông tin chi phí.
+- Mặc định cùng giới theo danh tính mẫu, không bật ghép khác giới. Đây là giả định demo, không kiểm tra danh tính thật.
+- Khu vực, ngân sách, ngày và thời hạn là lọc cứng. Chọn tối đa 5 khu vực có thứ tự, thời gian di chuyển mẫu và khoảng thời hạn; trường/nơi làm việc độc lập. Hai người đã có phòng không ghép nhau. Người có phòng cần liên kết tin đang hiển thị và đủ thông tin chi phí.
 - Điểm `√(S(A→B) × S(B→A))`, trọng số theo đặc tả. Mức Quan trọng ×1,5; Bình thường ×1; Không quan tâm ×0; Bắt buộc kiểm tra hai chiều và không cộng lại vào điểm mềm. Tổng trọng số bằng 0 hiển thị chưa đủ tiêu chí chấm điểm. Ma trận giờ giấc và ngưỡng độ tương đồng là giả định demo cần hiệu chỉnh. Điểm không phải xác suất sống chung thành công.
-- Bộ thói quen prototype gồm giờ ngủ, gọn gàng, hút thuốc, khách, tiếng ồn, ăn uống và thú cưng; chưa tách riêng rượu bia hoặc thêm mọi tiêu chí phòng trong đặc tả rộng.
+- Hồ sơ có nhóm phòng/chi phí và thói quen mở rộng; xem [docs/PROTOTYPE-REVIEW.md](docs/PROTOTYPE-REVIEW.md) để biết trường nào chấm điểm, điều kiện cứng và giả định chưa chốt.
 - Tìm quanh địa điểm bằng cụm, không dựng khoảng cách/thời gian di chuyển chính xác. Điều kiện ưu tiên chỉ xếp thứ tự; không âm thầm nới bắt buộc.
 - Điểm tin và khoảng giá chỉ minh họa. Không tuyên bố đã kiểm tra ảnh hoặc xác minh quyền cho thuê. Khoản phí cọc mẫu bằng một tháng tiền phòng.
 - Chưa triển khai API/database, OAuth, SMS/eKYC thật, AI thật, upload file, thanh toán, lịch tự động 7/14 ngày, revision bất biến, nhóm nhiều người, CI/CD hoặc hosting. Không cần API key.
+
+Đợt rà soát RoomMatch/chat/Trust và bảng lỗi trước sửa: [docs/PROTOTYPE-REVIEW.md](docs/PROTOTYPE-REVIEW.md).
 
 ## Kiểm tra
 

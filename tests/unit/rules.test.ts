@@ -98,7 +98,10 @@ test("mandatory compatibility checks both people, date and zero-width budgets", 
     b = structuredClone(people[0]);
   assert.equal(compatibility(a, { ...b, smoke: true }), null);
   assert.equal(compatibility({ ...a, smoke: true, noSmoke: false }, b), null);
-  assert.equal(compatibility(a, { ...b, area: areas[1] }), null);
+  assert.equal(
+    compatibility(a, { ...b, area: areas[1], areas: [areas[1]] }),
+    null,
+  );
   assert.equal(
     compatibility(a, { ...b, moveFrom: "2027-01-01", moveTo: "2027-02-01" }),
     null,

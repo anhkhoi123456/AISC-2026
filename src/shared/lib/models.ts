@@ -8,7 +8,43 @@ export type ListingStatus =
   | "rejected"
   | "hidden"
   | "rented";
+export type FeeStatus = "charged" | "included" | "none" | "unknown";
+export type FeeKey =
+  | "internet"
+  | "cleaning"
+  | "electricity"
+  | "water"
+  | "parking"
+  | "management"
+  | "extraGuest"
+  | "laundry"
+  | "transfer";
+export type Fee = { status: FeeStatus; amount: number | null };
+export type Identity = {
+  name: string;
+  gender: string;
+  birthYear: number;
+  occupation: string;
+  otp: boolean;
+  verified: boolean;
+};
 export type Listing = {
+  verifiedReportIds?: string[];
+  feeStates?: Partial<Record<FeeKey, Fee>>;
+  depositMonths?: number;
+  allowedPets?: ("cat" | "dog")[];
+  floor?: number;
+  elevator?: boolean;
+  view?: string;
+  roomNoise?: number;
+  trustEvidence?: {
+    ownerScore: number;
+    checkedImages: number;
+    video: boolean;
+    rentalRight: boolean;
+    flags: ("lowPrice" | "images" | "fraud")[];
+    validReports: number;
+  };
   id: string;
   title: string;
   area: string;
@@ -46,6 +82,30 @@ export type Criterion =
   | "pets";
 export type Importance = "must" | "important" | "normal" | "ignore";
 export type Profile = {
+  areas: string[];
+  anchor: string;
+  commuteMax: number;
+  commuteSamples: Record<string, number>;
+  monthsMax: number;
+  vacancies: number;
+  floorMin: number;
+  floorMax: number;
+  elevator: boolean;
+  view: string;
+  roomNoiseMax: number;
+  requiredAmenities: string[];
+  maxDepositMonths: number;
+  maxElectricity: number;
+  maxExtraFees: number;
+  alcohol: number;
+  alcoholMax: number;
+  guestsMax: number;
+  cooking: string;
+  diet: string;
+  chores: string;
+  nightShift: boolean;
+  personality: string;
+  interests: string[];
   name: string;
   gender: string;
   scenario: string;
@@ -59,6 +119,7 @@ export type Profile = {
   tidy: number;
   smoke: boolean;
   noSmoke: boolean;
+  petType: "cat" | "dog";
   pets: boolean;
   acceptPets: boolean;
   bio: string;
@@ -93,12 +154,20 @@ export type Conversation = {
   name: string;
   avatar: string;
   type: "roommatch" | "listing";
+  sharing?: { mine: boolean; theirs: boolean };
   ended: boolean;
   messages: Message[];
 };
 
 export type Role = "guest" | "tenant" | "landlord" | "admin";
 export type DemoState = {
+  identity?: Identity;
+  lastSwipe?: {
+    id: string;
+    likes: string[];
+    passed: string[];
+    conversationIds: string[];
+  };
   status: Status;
   role: Role;
   name: string;

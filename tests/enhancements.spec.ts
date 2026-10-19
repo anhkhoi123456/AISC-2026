@@ -1,3 +1,4 @@
+import { finishDemoLogin, publishProfile } from "./helpers";
 import { test, expect, type Page } from "@playwright/test";
 async function role(page: Page, value: string) {
   await page.getByRole("button", { name: /Vai trò demo:/ }).click();
@@ -5,6 +6,7 @@ async function role(page: Page, value: string) {
     .getByRole("combobox", { name: "Vai trò demo", exact: true })
     .selectOption(value);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await finishDemoLogin(page);
 }
 test("UIT autocomplete, URL persistence, Back and four parsed chips", async ({
   page,
@@ -47,25 +49,36 @@ test("draft survives reload and one-way interest does not open a chat", async ({
   await page.getByLabel("Ngân sách tối đa / người").fill("2500000");
   await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Nhịp sống của bạn thế nào?" }),
+    page.getByRole("heading", { name: "Phòng và chi phí chấp nhận được" }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Nhịp sống của bạn thế nào?" }),
+    page.getByRole("heading", { name: "Phòng và chi phí chấp nhận được" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Quay lại", exact: true }).click();
   await expect(page.getByLabel("Ngân sách tối đa / người")).toHaveValue(
     "2500000",
   );
-  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
-  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
-  await page.getByRole("button", { name: "Bật hiển thị hồ sơ" }).click();
+  await publishProfile(page);
+  await page
+    .locator(".person-card")
+    .filter({ hasText: "Ngọc Linh" })
+    .getByRole("button", { name: "Bỏ qua", exact: true })
+    .click();
   const vy = page.locator(".person-card").filter({ hasText: "Thảo Vy" });
   await vy.getByRole("button", { name: "Quan tâm", exact: true }).click();
   await page.getByRole("button", { name: "Đã quan tâm", exact: true }).click();
   await expect(
     page.locator(".person-card").filter({ hasText: "Thảo Vy" }),
   ).toBeVisible();
+  await page
+    .locator(".person-card")
+    .filter({ hasText: "Thảo Vy" })
+    .getByRole("button", { name: "Bỏ qua", exact: true })
+    .click();
+  await expect(page.locator(".person-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "Hoàn tác lượt gần nhất" }).click();
+  await expect(page.locator(".person-card")).toContainText("Thảo Vy");
   await page.goto("/tin-nhan");
   await expect(
     page.getByRole("heading", { name: "Chưa có cuộc trò chuyện nào" }),
@@ -77,7 +90,9 @@ test("trust breakdown and insufficient price data are explicitly illustrated", a
   await page.goto("/phong/phong-ban-cong");
   const score = await page.locator(".trust-number").textContent();
   await page.getByRole("button", { name: "Vì sao điểm này?" }).click();
-  await expect(page.getByRole("dialog")).toContainText("Đầy đủ các khoản phí");
+  await expect(page.getByRole("dialog")).toContainText(
+    "Đầy đủ thông tin & chi phí",
+  );
   await page.getByRole("button", { name: "Đóng", exact: true }).click();
   await page.reload();
   await expect(page.locator(".trust-number")).toHaveText(score!);

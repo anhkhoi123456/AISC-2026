@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDemo } from "@/shared/lib/demo-store";
 import {
   PageTitle,
@@ -10,7 +10,13 @@ import {
   ReportButton,
 } from "@/shared/components/ui";
 import { Icon } from "@/shared/components/icon";
-import { roommatchService, swipe, type getDeck } from "@/services/roommatch";
+import {
+  roommatchService,
+  swipe,
+  undoSwipe,
+  type getDeck,
+} from "@/services/roommatch";
+import { userTrustScore } from "@/services/user-trust";
 import { money } from "@/features/listings/lib/cost";
 export function RoommatchScreen() {
   return (
@@ -30,7 +36,7 @@ function Explore() {
   const [deck, setDeck] = useState<ReturnType<typeof getDeck>>([]);
   useEffect(() => {
     let current = true;
-    if (!data.profile.visible) return;
+    if (!data.profile.visible && tab !== "matches") return;
     setLoading(true);
     setError("");
     roommatchService
@@ -63,12 +69,38 @@ function Explore() {
           action === "pass"
             ? "Đã bỏ qua hồ sơ."
             : unliking
-              ? "Đã rút quan tâm."
+              ? "Lượt quan tâm đã được lưu trước đó."
               : "Đã lưu quan tâm một chiều, chưa mở chat.",
         );
     }
     setBusy(false);
   }
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (
+        busy ||
+        loading ||
+        matched ||
+        tab !== "discover" ||
+        !data.profile.visible ||
+        document.querySelector('[role="dialog"]') ||
+        (e.target instanceof Element &&
+          e.target.closest('input,textarea,select,[contenteditable="true"]'))
+      )
+        return;
+      if (e.key === "ArrowRight" && deck[0]) {
+        e.preventDefault();
+        void interact(deck[0].person.id, "like");
+      }
+      if (e.key === "ArrowLeft" && deck[0]) {
+        e.preventDefault();
+        void interact(deck[0].person.id, "pass");
+      }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  });
   return (
     <main className="container section">
       <PageTitle
@@ -101,7 +133,22 @@ function Explore() {
           <span className="live-dot" />
         </span>
       </div>
-      {!data.profile.visible ? (
+      {data.profile.visible && (
+        <div className="deck-toolbar">
+          <p>
+            ← / vuốt trái: bỏ qua · → / vuốt phải: quan tâm. {deck.length} hồ sơ
+            trong nhóm.
+          </p>
+          <button
+            className="btn outline"
+            disabled={!data.lastSwipe || busy}
+            onClick={() => command(undoSwipe)}
+          >
+            Hoàn tác lượt gần nhất
+          </button>
+        </div>
+      )}
+      {!data.profile.visible && tab !== "matches" ? (
         <Empty
           title="Người bạn hợp bắt đầu từ chính bạn."
           description="Hoàn thiện nhu cầu và thói quen để khám phá những kết nối phù hợp."
@@ -126,141 +173,216 @@ function Explore() {
         <div className="match-layout">
           <div>
             {deck.length ? (
-              deck.map(({ person: p, result }) => {
-                const conversation = data.conversations.find(
-                  (c) => c.id === "match-" + p.id,
-                );
-                return (
-                  <article className="person-card" key={p.id}>
-                    <div className="person-image">
-                      <img
-                        src={p.avatar}
-                        alt={`${p.name} — nhân vật minh họa`}
-                      />
-                      <span className="image-badge">
-                        Hồ sơ mẫu · Chưa xác minh
-                      </span>
-                      <div className="person-image-name">
-                        <h2>{p.name}, 21</h2>
-                        <p>{p.school}</p>
-                      </div>
-                    </div>
-                    <div className="person-content">
-                      <div className="match-score">
-                        <span>
-                          <Icon name="leaf" size={18} />
-                          <strong>
-                            {result.score ?? "—"}
-                            <small>/100</small>
-                          </strong>
-                        </span>
-                        <div>
-                          <b>
-                            {result.score === null
-                              ? "Đạt điều kiện"
-                              : result.score >= 80
-                                ? "Rất hợp"
-                                : result.score >= 65
-                                  ? "Hợp"
-                                  : "Cần trao đổi thêm"}
-                          </b>
-                          <small>
-                            {result.score === null
-                              ? "Chưa có tiêu chí mềm để chấm điểm"
-                              : "Điểm phù hợp hai chiều · Demo"}
-                          </small>
-                        </div>
-                      </div>
-                      <p className="person-bio">{p.bio}</p>
-                      <div className="tags">
-                        <span>{p.scenario}</span>
-                        <span>
-                          {money(p.min)}–{money(p.max)} / người
-                        </span>
-                        <span>{p.months} tháng</span>
-                        <span>{p.sleep}</span>
-                        {p.quiet && <span>Cần yên tĩnh</span>}
-                      </div>
-                      <div className="why-match">
-                        <h4>Vì sao có thể hợp?</h4>
-                        {result.good.map((g) => (
-                          <p key={g}>
-                            <Icon name="check" size={15} />
-                            {g}
-                          </p>
-                        ))}
-                        {result.different.map((g) => (
-                          <p key={g} className="warning-text">
-                            {g}
-                          </p>
-                        ))}
-                        {result.ab !== null && result.ba !== null && (
-                          <details>
-                            <summary>Cách tính điểm</summary>
-                            <p>
-                              A→B: {result.ab.toFixed(1)} · B→A:{" "}
-                              {result.ba.toFixed(1)}
-                              <br />
-                              Làm tròn √(A→B × B→A) = {result.score}. Trọng số
-                              theo đặc tả, mức quan trọng do mỗi bên chọn.
-                            </p>
-                          </details>
-                        )}
-                      </div>
-                      {conversation && !conversation.ended ? (
-                        <Link
-                          className="btn primary full"
-                          href={"/tin-nhan?chat=match-" + p.id}
-                        >
-                          <Icon name="chat" size={18} />
-                          Nhắn tin
-                        </Link>
-                      ) : (
-                        <div className="person-actions">
-                          <button
-                            disabled={busy}
-                            className="btn outline"
-                            onClick={() => interact(p.id, "pass")}
-                          >
-                            <Icon name="close" size={18} />
-                            Bỏ qua
-                          </button>
-                          <button
-                            disabled={busy}
-                            className="btn primary"
-                            onClick={() => interact(p.id, "like")}
-                          >
-                            <Icon name="heart" size={18} />
-                            {data.likes.includes(p.id)
-                              ? "Rút quan tâm"
-                              : "Quan tâm"}
-                          </button>
+              (tab === "discover" ? deck.slice(0, 1) : deck).map(
+                ({ person: p, result }) => {
+                  const conversation = data.conversations.find(
+                    (c) => c.id === "match-" + p.id,
+                  );
+                  return (
+                    <article
+                      className={`person-card ${tab === "discover" ? "stack-card" : ""}`}
+                      key={p.id}
+                      onPointerDown={(e) => {
+                        if (
+                          e.target instanceof Element &&
+                          e.target.closest(
+                            "a,button,input,select,textarea,summary",
+                          )
+                        )
+                          return;
+                        touch.current = { x: e.clientX, y: e.clientY };
+                      }}
+                      onPointerUp={(e) => {
+                        if (
+                          e.target instanceof Element &&
+                          e.target.closest(
+                            "a,button,input,select,textarea,summary",
+                          )
+                        ) {
+                          touch.current = null;
+                          return;
+                        }
+                        const start = touch.current;
+                        touch.current = null;
+                        if (!start || busy || tab !== "discover") return;
+                        const dx = e.clientX - start.x,
+                          dy = e.clientY - start.y;
+                        if (
+                          Math.abs(dx) > 80 &&
+                          Math.abs(dx) > Math.abs(dy) * 1.5
+                        )
+                          void interact(p.id, dx > 0 ? "like" : "pass");
+                      }}
+                      onPointerCancel={() => {
+                        touch.current = null;
+                      }}
+                    >
+                      {tab === "discover" && deck.length > 1 && (
+                        <div className="stack-hint">
+                          {deck.length - 1} hồ sơ phía sau
                         </div>
                       )}
-                      <div className="person-footer">
-                        <ReportButton target={"profile-" + p.id} />
-                        <button
-                          className="text-btn muted"
-                          onClick={() => {
-                            update((s) => ({
-                              ...s,
-                              blocked: [...new Set([...s.blocked, p.id])],
-                              conversations: s.conversations.map((c) =>
-                                c.id === "match-" + p.id
-                                  ? { ...c, ended: true }
-                                  : c,
-                              ),
-                            }));
-                            notify("Đã chặn và đóng quyền gửi tin.");
-                          }}
-                        >
-                          Chặn hồ sơ
-                        </button>
+                      <div className="person-image">
+                        <img
+                          src={p.avatar}
+                          alt={`${p.name} — nhân vật minh họa`}
+                        />
+                        <span className="image-badge">
+                          Danh tính mẫu · Mô phỏng
+                        </span>
+                        <div className="person-image-name">
+                          <h2>{p.name}, 21</h2>
+                          <p>{p.school}</p>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                );
-              })
+                      <div className="person-content">
+                        <div className="match-score">
+                          <span>
+                            <Icon name="leaf" size={18} />
+                            <strong>
+                              {result.score ?? "—"}
+                              <small>/100</small>
+                            </strong>
+                          </span>
+                          <div>
+                            <b>
+                              {!result.qualifies
+                                ? "Nhu cầu đã thay đổi"
+                                : result.score === null
+                                  ? "Đạt điều kiện"
+                                  : result.score >= 80
+                                    ? "Rất hợp"
+                                    : result.score >= 65
+                                      ? "Hợp"
+                                      : "Cần trao đổi thêm"}
+                            </b>
+                            <small>
+                              {!result.qualifies
+                                ? "Kết nối cũ · Trao đổi lại nhu cầu"
+                                : result.score === null
+                                  ? "Chưa có tiêu chí mềm để chấm điểm"
+                                  : "Điểm phù hợp hai chiều · Demo"}
+                            </small>
+                          </div>
+                        </div>
+                        <p className="user-trust">
+                          User Trust:{" "}
+                          {
+                            userTrustScore({
+                              otp: true,
+                              verified: true,
+                              bio: !!p.bio,
+                              profileComplete: true,
+                            }).score
+                          }
+                          /100 · Giả lập
+                        </p>
+                        <p>
+                          Khu vực giao nhau: {result.sharedAreas.join(" · ")}
+                        </p>
+                        {p.scenario === "Đã có phòng" && (
+                          <Link
+                            href={"/phong/" + p.roomId}
+                            className="text-btn"
+                          >
+                            Xem phòng đang có · {p.vacancies} chỗ trống
+                          </Link>
+                        )}
+                        <p className="person-bio">{p.bio}</p>
+                        <div className="tags">
+                          <span>{p.scenario}</span>
+                          <span>
+                            {money(p.min)}–{money(p.max)} / người
+                          </span>
+                          <span>{p.months} tháng</span>
+                          <span>{p.sleep}</span>
+                          {p.quiet && <span>Cần yên tĩnh</span>}
+                        </div>
+                        <div className="why-match">
+                          <h4>
+                            {result.qualifies
+                              ? "Vì sao có thể hợp?"
+                              : "Trạng thái nhu cầu"}
+                          </h4>
+                          {result.good.map((g) => (
+                            <p key={g}>
+                              <Icon name="check" size={15} />
+                              {g}
+                            </p>
+                          ))}
+                          {result.different.map((g) => (
+                            <p key={g} className="warning-text">
+                              {g}
+                            </p>
+                          ))}
+                          {result.ab !== null && result.ba !== null && (
+                            <details>
+                              <summary>Cách tính điểm</summary>
+                              <p>
+                                A→B: {result.ab.toFixed(1)} · B→A:{" "}
+                                {result.ba.toFixed(1)}
+                                <br />
+                                Làm tròn √(A→B × B→A) = {result.score}. Trọng số
+                                theo đặc tả, mức quan trọng do mỗi bên chọn.
+                              </p>
+                            </details>
+                          )}
+                        </div>
+                        {conversation && !conversation.ended ? (
+                          <Link
+                            className="btn primary full"
+                            href={"/tin-nhan?chat=match-" + p.id}
+                          >
+                            <Icon name="chat" size={18} />
+                            Nhắn tin
+                          </Link>
+                        ) : (
+                          <div className="person-actions">
+                            <button
+                              disabled={busy}
+                              className="btn outline"
+                              onClick={() => interact(p.id, "pass")}
+                            >
+                              <Icon name="close" size={18} />
+                              Bỏ qua
+                            </button>
+                            <button
+                              disabled={busy || data.likes.includes(p.id)}
+                              className="btn primary"
+                              onClick={() => interact(p.id, "like")}
+                            >
+                              <Icon name="heart" size={18} />
+                              {data.likes.includes(p.id)
+                                ? "Đã quan tâm"
+                                : "Quan tâm"}
+                            </button>
+                          </div>
+                        )}
+                        <div className="person-footer">
+                          <ReportButton target={"profile-" + p.id} />
+                          <button
+                            className="text-btn muted"
+                            onClick={() => {
+                              update((s) => ({
+                                ...s,
+                                blocked: [...new Set([...s.blocked, p.id])],
+                                conversations: s.conversations.map((c) =>
+                                  c.id === "match-" + p.id
+                                    ? { ...c, ended: true }
+                                    : c,
+                                ),
+                              }));
+                              notify("Đã chặn và đóng quyền gửi tin.");
+                            }}
+                          >
+                            Chặn hồ sơ
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                },
+              )
             ) : (
               <Empty
                 title="Chưa có thêm hồ sơ đạt điều kiện."
@@ -305,8 +427,9 @@ function Explore() {
             </div>
             <p className="fineprint">
               Ngọc Linh đã quan tâm bạn trong kịch bản mẫu. Điểm phù hợp không
-              phải xác suất sống chung thành công. Giới tính tự khai, mặc định
-              cùng giới là giả định demo.
+              phải xác suất sống chung thành công. Giới tính từ danh tính mẫu,
+              mặc định cùng giới là giả định demo. Thời gian đi lại là số phút
+              mẫu do người dùng khai, không phải đo bản đồ.
             </p>
           </aside>
         </div>

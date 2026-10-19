@@ -1,4 +1,5 @@
 "use client";
+import { setListingReportDecision } from "@/services/listing-trust";
 import { useState } from "react";
 import { useDemo } from "@/shared/lib/demo-store";
 import { PageTitle, Empty, Modal } from "@/shared/components/ui";
@@ -91,13 +92,24 @@ export function AdminScreen() {
           : d.type === "report" && d.action === "violation"
             ? s.listings.map((r) =>
                 r.id === s.reports.find((x) => x.id === d.id)?.target
-                  ? { ...r, status: "hidden", note: reason }
+                  ? {
+                      ...setListingReportDecision(r, d.id, true),
+                      status: "hidden",
+                      note: reason,
+                    }
                   : r,
               )
             : restore && report?.previousStatus
               ? s.listings.map((r) =>
-                  r.id === target && r.status === "hidden"
-                    ? { ...r, status: report.previousStatus!, note: reason }
+                  r.id === target
+                    ? {
+                        ...setListingReportDecision(r, d.id, false),
+                        status:
+                          r.status === "hidden"
+                            ? report.previousStatus!
+                            : r.status,
+                        note: reason,
+                      }
                     : r,
                 )
               : s.listings,
