@@ -1,4 +1,5 @@
 "use client";
+import { presentListing } from "@/features/listings/lib/presentation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -89,8 +90,7 @@ function ProfileForm() {
   return (
     <main className="container narrow section">
       <PageTitle
-        eyebrow="HỒ SƠ ROOMMATCH"
-        title="Kể một chút về bạn."
+        title="Hồ sơ ở ghép"
         description="Nhu cầu phòng và thói quen cá nhân được khai riêng. Tất cả là dữ liệu mô phỏng."
       />
       <div className="stepper">
@@ -112,7 +112,7 @@ function ProfileForm() {
       >
         {step === 0 ? (
           <>
-            <h2>Bạn đang tìm điều gì?</h2>
+            <h2>Nhu cầu thuê</h2>
             <p className="info-note">
               Danh tính mẫu đã xác minh (chỉ đọc): {p.name} · {p.gender} ·{" "}
               {data.identity?.birthYear} · {data.identity?.occupation}. Chỉ thay
@@ -144,7 +144,7 @@ function ProfileForm() {
                       .filter((r) => r.status === "published" && r.capacity > 1)
                       .map((r) => (
                         <option key={r.id} value={r.id}>
-                          {r.title}
+                          {presentListing(r).title}
                         </option>
                       ))}
                   </select>
@@ -322,7 +322,7 @@ function ProfileForm() {
           </>
         ) : step === 2 ? (
           <>
-            <h2>Nhịp sống của bạn thế nào?</h2>
+            <h2>Thói quen sinh hoạt</h2>
             <p className="fineprint">
               Nấu ăn, chế độ ăn, chia việc, ca đêm, tính cách và sở thích dùng
               để trao đổi; chưa có trọng số riêng nên không tự kết luận phù hợp
@@ -458,7 +458,7 @@ function ProfileForm() {
           </>
         ) : (
           <>
-            <h2>Sẵn sàng gặp người bạn mới?</h2>
+            <h2>Xem lại hồ sơ</h2>
             <div className="profile-preview">
               <h3>{p.name}</h3>
               <p>{p.bio}</p>

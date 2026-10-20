@@ -30,7 +30,7 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
   return (
     <main className="container narrow section">
       <p className="eyebrow">XÁC MINH MÔ PHỎNG</p>
-      <h1>Một cộng đồng bắt đầu từ tin cậy.</h1>
+      <h1>Xác minh tài khoản demo</h1>
       <p className="muted">
         Trải nghiệm luồng OTP và eKYC với dữ liệu mẫu. Không nhập giấy tờ thật.
       </p>
@@ -173,7 +173,7 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                 className="btn primary"
                 onClick={() => router.push(destination())}
               >
-                Tiếp tục hành trình <Icon name="arrow" size={17} />
+                Tiếp tục sử dụng demo <Icon name="arrow" size={17} />
               </button>
             ) : (
               <>

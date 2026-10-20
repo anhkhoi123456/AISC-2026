@@ -176,11 +176,8 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
   return (
     <main className="container section">
       <PageTitle
-        eyebrow={favorites ? "GÓC NHỎ CỦA BẠN" : "TÌM PHÒNG CÙNG ANTRO"}
-        title={
-          favorites ? "Những nơi bạn muốn về." : "Phòng vừa ý, sống thảnh thơi."
-        }
-        description="Chọn nơi học, địa điểm thân quen và ngân sách phù hợp với bạn."
+        title={favorites ? "Tin đã lưu" : "Tìm phòng"}
+        description="Lọc theo khu vực, ngân sách và điều kiện ở. Tin và địa điểm trong bản này là dữ liệu mẫu."
       />
       {!favorites && (
         <form
@@ -458,7 +455,7 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
           )}
           <div className="filter-tip">
             <Icon name="leaf" size={23} />
-            <h4>Giữ những điều quan trọng.</h4>
+            <h4>Điều kiện tìm phòng</h4>
             <p>
               Điều kiện bắt buộc lọc nhóm chính. Điều kiện ưu tiên chỉ tăng thứ
               tự. Chi phí dùng 120 kWh/phòng/tháng và 1 xe/người.

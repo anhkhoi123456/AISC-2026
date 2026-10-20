@@ -20,7 +20,7 @@ export function AccountScreen() {
     return (
       <main className="container section">
         <Empty
-          title="Góc nhỏ dành riêng cho bạn"
+          title="Tài khoản"
           description="Đăng nhập để quản lý hồ sơ, tin đã lưu và các kết nối."
           action={
             <Link className="btn primary" href="/dang-nhap">
@@ -35,7 +35,7 @@ export function AccountScreen() {
       <PageTitle
         eyebrow="TÀI KHOẢN CỦA BẠN"
         title={`Chào ${data.name},`}
-        description="Quản lý hồ sơ và những bước tiếp theo trong hành trình của bạn."
+        description="Xem trạng thái xác minh, hồ sơ ở ghép và dữ liệu demo đã lưu."
       />
       <div className="account-grid">
         <section className="panel">

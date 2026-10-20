@@ -1,4 +1,5 @@
 "use client";
+import { presentListing } from "@/features/listings/lib/presentation";
 import { setListingReportDecision } from "@/services/listing-trust";
 import { useState } from "react";
 import { useDemo } from "@/shared/lib/demo-store";
@@ -25,7 +26,7 @@ export function AdminScreen() {
             <Icon name="shield" size={32} />
           </span>
           <p className="eyebrow">KHÔNG GIAN VẬN HÀNH</p>
-          <h1>Trải nghiệm vai trò kiểm duyệt.</h1>
+          <h1>Công cụ vận hành demo</h1>
           <p className="muted">
             Đây là giao diện Admin mô phỏng, dùng chung dữ liệu local của bản
             demo. Chế độ này không cấp quyền quản trị thật và không phải cơ chế
@@ -149,7 +150,7 @@ export function AdminScreen() {
     <main className="container section">
       <PageTitle
         eyebrow="ANTRO / VẬN HÀNH DEMO"
-        title="Giữ cộng đồng rõ ràng, an toàn."
+        title="Duyệt tin và báo cáo"
         description="Kiểm tra thông tin trước khi ra quyết định. Cảnh báo chưa phải kết luận vi phạm."
         action={
           <button className="btn outline" onClick={() => setEntered(false)}>
@@ -199,7 +200,7 @@ export function AdminScreen() {
             {pending.map((r) => (
               <div className="table-row" key={r.id}>
                 <div>
-                  <strong>{r.title}</strong>
+                  <strong>{presentListing(r).title}</strong>
                   <p className="muted">{r.area}</p>
                   <span className="pill">{statusLabels[r.status]}</span>
                 </div>

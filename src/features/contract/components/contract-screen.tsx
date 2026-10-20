@@ -46,7 +46,7 @@ function ContractFlow() {
     <main className="container section">
       <PageTitle
         eyebrow="ĐỌC KỸ TRƯỚC KHI ĐẶT BÚT"
-        title="Hiểu hợp đồng, yên tâm hơn."
+        title="Đọc hợp đồng mẫu"
         description="Tìm các điều khoản đáng trao đổi bằng quy tắc từ khóa. Không upload file, không gọi AI."
       />
       <p className="info-note">
@@ -92,7 +92,7 @@ function ContractFlow() {
                 <span className="feature-icon">
                   <Icon name="contract" size={27} />
                 </span>
-                <h2>Thử một mẫu ngắn.</h2>
+                <h2>Văn bản mẫu</h2>
                 <p className="muted">
                   Hai mẫu giả lập để so sánh các điều khoản rõ ràng và những
                   điểm cần hỏi thêm.

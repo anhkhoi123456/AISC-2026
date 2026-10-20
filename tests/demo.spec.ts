@@ -19,7 +19,7 @@ async function activate(page: import("@playwright/test").Page) {
   await page.getByLabel("Mã OTP demo").fill("123456");
   await page.getByRole("button", { name: "Xác nhận và tiếp tục" }).click();
   await page.getByRole("button", { name: "Xem kết quả mô phỏng" }).click();
-  await page.getByRole("button", { name: "Tiếp tục hành trình" }).click();
+  await page.getByRole("button", { name: "Tiếp tục sử dụng demo" }).click();
   await expect(
     page.getByRole("heading", { name: "Chào Minh Anh," }),
   ).toBeVisible();

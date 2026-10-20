@@ -45,9 +45,8 @@ function Messages() {
   return (
     <main className="container section">
       <PageTitle
-        eyebrow="NHỮNG CUỘC TRÒ CHUYỆN MỚI"
-        title="Bắt đầu bằng một lời chào."
-        description="Nơi cùng trao đổi về căn phòng và nhịp sống sắp tới."
+        title="Tin nhắn"
+        description="Trao đổi về phòng, chi phí và lịch xem phòng trong hội thoại mẫu."
       />
       {!chat ? (
         <Empty

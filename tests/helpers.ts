@@ -9,7 +9,7 @@ export async function finishDemoLogin(page: Page) {
   await page.getByLabel("Mã OTP demo").fill("123456");
   await page.getByRole("button", { name: "Xác nhận và tiếp tục" }).click();
   await page.getByRole("button", { name: "Xem kết quả mô phỏng" }).click();
-  await page.getByRole("button", { name: "Tiếp tục hành trình" }).click();
+  await page.getByRole("button", { name: "Tiếp tục sử dụng demo" }).click();
 }
 export async function publishProfile(page: Page) {
   for (let i = 0; i < 4; i++)

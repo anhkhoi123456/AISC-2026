@@ -44,15 +44,11 @@ export function LoginScreen() {
             AnTro<span className="brand-dot">.</span>
           </Link>
           <div className="login-story-copy">
-            <p className="eyebrow">KHỞI ĐẦU NHỎ, AN TÂM HƠN</p>
-            <h1>
-              Một nơi ở mới.
-              <br />
-              Một khởi đầu <em>an tâm.</em>
-            </h1>
+            <p className="eyebrow">ANTRO · DEMO</p>
+            <h1>Lưu phòng và trao đổi với người đăng.</h1>
             <p>
-              Từ căn phòng vừa ý đến người bạn cùng nhịp sống. Cùng AnTro tìm
-              một nơi dành cho bạn.
+              Bạn cũng có thể tạo hồ sơ ở ghép, xem ngân sách và thói quen của
+              các hồ sơ mẫu.
             </p>
           </div>
           <figure className="login-story-image">
@@ -60,9 +56,7 @@ export function LoginScreen() {
               src="/images/student-room.jpg"
               alt="Góc phòng ngủ gọn gàng với ánh đèn đọc sách ấm áp"
             />
-            <figcaption>
-              Không cần quá lớn. Chỉ cần thấy mình thuộc về.
-            </figcaption>
+            <figcaption>Ảnh không gian sống minh họa</figcaption>
           </figure>
         </section>
         <section
@@ -70,11 +64,11 @@ export function LoginScreen() {
           aria-label={register ? "Đăng ký demo" : "Đăng nhập demo"}
         >
           <div className="login-card">
-            <p className="eyebrow">CHÀO BẠN ĐẾN VỚI ANTRO</p>
-            <h2>{register ? "Bắt đầu hành trình." : "Rất vui gặp lại bạn."}</h2>
+            <p className="eyebrow">TÀI KHOẢN DEMO</p>
+            <h2>{register ? "Đăng ký demo" : "Đăng nhập"}</h2>
             <p className="login-intro">
               {register
-                ? "Tạo hồ sơ mẫu để khám phá nơi ở tiếp theo."
+                ? "Tạo tài khoản mẫu để lưu phòng và dùng RoomMatch."
                 : "Đăng nhập để lưu phòng và kết nối bạn ở ghép."}
             </p>
             {data.role === "admin" ? (

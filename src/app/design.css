@@ -2498,3 +2498,186 @@ fieldset {
   display: block;
   overflow-wrap: anywhere;
 }
+
+/* Task-first homepage: one brand line, then search and actual sample listings. */
+.task-home .hero {
+  display: block;
+  padding: 22px 0 20px;
+}
+.home-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.home-scope {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.task-home .hero h1 {
+  font-size: clamp(30px, 3vw, 42px);
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+  max-width: none;
+  margin: 0;
+}
+.task-home .hero-description {
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 12px 0 0;
+  max-width: 660px;
+}
+.home-intro > .btn {
+  flex-shrink: 0;
+}
+.task-home .hero-search-container {
+  margin-top: 24px;
+}
+.task-home .hero-search-wrap {
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 3%);
+}
+.task-home .home-rooms {
+  padding-top: 28px;
+  padding-bottom: 36px;
+}
+.home-rooms .section-heading {
+  margin-bottom: 20px;
+}
+.home-rooms .section-heading p {
+  font-size: 15px;
+  max-width: 650px;
+}
+.home-next {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding-top: 28px;
+  padding-bottom: 40px;
+  border-top: 1px solid var(--line);
+}
+.home-next h2 {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+.home-next p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 16px;
+  max-width: 520px;
+}
+.room-card {
+  border-radius: 12px;
+  box-shadow: none;
+}
+.room-card:hover {
+  box-shadow: 0 3px 12px rgb(0 0 0 / 5%);
+}
+.room-card h3 {
+  font-size: 18px;
+}
+.room-conditions {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.room-data-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+.room-price p,
+.room-price span {
+  font-size: 14px;
+}
+.single-room-photo {
+  display: block;
+  height: 360px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.single-room-photo > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.single-room-photo .gallery-label {
+  max-width: calc(100% - 24px);
+  white-space: normal;
+}
+.page-title h1 {
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.8px;
+}
+.login-story-copy h1 {
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.25;
+  letter-spacing: -1px;
+}
+.login-story-image {
+  border-radius: 12px;
+}
+.login-card {
+  box-shadow: none;
+}
+.value-card,
+.info-note,
+.sidebar-note {
+  box-shadow: none;
+}
+@media (max-width: 700px) {
+  .task-home .hero {
+    padding: 22px 0 20px;
+  }
+  .home-intro {
+    display: block;
+  }
+  .home-scope {
+    font-size: 12px;
+  }
+  .task-home .hero h1 {
+    font-size: 30px;
+    letter-spacing: -0.8px;
+  }
+  .task-home .hero-description {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+  .home-intro > .btn {
+    margin-top: 14px;
+    min-height: 42px;
+    padding: 8px 14px;
+  }
+  .task-home .hero-search-container {
+    margin-top: 18px;
+  }
+  .task-home .home-rooms {
+    padding-top: 24px;
+  }
+  .home-next {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .single-room-photo {
+    height: 260px;
+  }
+  .single-room-photo .gallery-label {
+    font-size: 12px;
+    bottom: 12px;
+    left: 12px;
+  }
+}
+
+.match-guidance {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.match-guidance .feature-icon {
+  display: none;
+}
+.match-guidance h3 {
+  margin-bottom: 12px;
+}

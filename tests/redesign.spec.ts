@@ -1,4 +1,4 @@
-import { finishDemoLogin } from "./helpers";
+import { finishDemoLogin, publishProfile } from "./helpers";
 import { test, expect, type Page } from "@playwright/test";
 async function noOverflow(page: Page) {
   expect(
@@ -50,6 +50,8 @@ for (const theme of ["light", "dark"] as const)
       await page.screenshot({
         path: `test-results/redesign-home-${theme}-${width}.png`,
       });
+      const firstRoom = await page.locator(".room-card").first().boundingBox();
+      if (width === 1440) expect(firstRoom!.y).toBeLessThan(600);
       await heroInput.fill("UIT");
       await expect(page.getByRole("listbox")).toBeVisible();
       await expect(
@@ -64,7 +66,7 @@ for (const theme of ["light", "dark"] as const)
       await expect(page).toHaveURL(/place=uit/);
       await page.goto("/dang-nhap");
       await expect(
-        page.getByRole("heading", { name: "Rất vui gặp lại bạn." }),
+        page.getByRole("heading", { name: "Đăng nhập" }),
       ).toBeVisible();
       const card = await page.locator(".login-card").boundingBox();
       expect(card!.width).toBeLessThanOrEqual(442);
@@ -89,9 +91,30 @@ for (const theme of ["light", "dark"] as const)
         await page.goto(route);
         await expect(page.locator("main h1").first()).toBeVisible();
         await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+        if (route === "/tim-phong")
+          await expect(page.locator(".room-card").first()).toBeVisible();
         await noOverflow(page);
+        await page.screenshot({
+          path: `test-results/task-${route.replaceAll("/", "-")}-${theme}-${width}.png`,
+          fullPage: true,
+        });
       }
+      await page.goto("/roommatch/ho-so");
+      await publishProfile(page);
+      await expect(page.locator(".person-card")).toHaveCount(1);
+      await expect(page.locator(".toast")).toBeHidden({ timeout: 10000 });
+      await noOverflow(page);
+      await page.screenshot({
+        path: `test-results/task-deck-${theme}-${width}.png`,
+        fullPage: true,
+      });
       await page.goto("/phong/phong-ban-cong");
+      await expect(page.locator(".detail-gallery img")).toHaveCount(1);
+      await noOverflow(page);
+      await page.screenshot({
+        path: `test-results/task-detail-${theme}-${width}.png`,
+        fullPage: true,
+      });
       await page.getByRole("button", { name: "Liên hệ người đăng" }).click();
       await expect(page.getByLabel("Nội dung tin nhắn")).toBeVisible();
       await page
@@ -166,7 +189,7 @@ test("login has working password toggle, reset guidance, registration and small-
   );
   await page.getByRole("button", { name: "Đăng ký", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Bắt đầu hành trình." }),
+    page.getByRole("heading", { name: "Đăng ký demo" }),
   ).toBeVisible();
   await page.getByLabel("Tên hiển thị", { exact: true }).fill("Sinh viên demo");
   await page

@@ -1,4 +1,5 @@
 "use client";
+import { presentListing } from "../lib/presentation";
 import Link from "next/link";
 import { TrustCard } from "@/shared/components/trust-card";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,8 @@ import { cost, money } from "../lib/cost";
 export function DetailScreen({ id }: { id: string }) {
   const { data, update } = useDemo();
   const router = useRouter();
-  const room = data.listings.find((r) => r.id === id);
+  const storedRoom = data.listings.find((r) => r.id === id);
+  const room = storedRoom ? presentListing(storedRoom) : undefined;
   const [people, setPeople] = useState(2);
   const [kwh, setKwh] = useState(120);
   const [vehicles, setVehicles] = useState(1);
@@ -73,10 +75,11 @@ export function DetailScreen({ id }: { id: string }) {
       </div>
       <div className="detail-title">
         <div>
-          <p className="eyebrow">MỘT KHÔNG GIAN ĐỂ BẮT ĐẦU</p>
+          <p className="eyebrow">TIN PHÒNG DEMO</p>
           <h1>{room.title}</h1>
           <p className="muted">
-            <Icon name="pin" size={16} /> {room.address}
+            <Icon name="pin" size={16} /> {room.address}{" "}
+            {room.demo && " · Địa chỉ mẫu, chưa xác nhận vị trí thực"}
           </p>
         </div>
         <button
@@ -98,13 +101,12 @@ export function DetailScreen({ id }: { id: string }) {
           {saved ? "Đã lưu tin" : "Lưu tin"}
         </button>
       </div>
-      <div className="detail-gallery">
+      <div className="detail-gallery single-room-photo">
         <img src={room.image} alt={room.title} />
-        <div>
-          <img src="/images/room-3.jpg" alt="Ảnh không gian bổ sung minh họa" />
-          <img src="/images/room-4.jpg" alt="Ảnh nội thất bổ sung minh họa" />
-        </div>
-        <span className="gallery-label">Ảnh minh họa · Dữ liệu demo</span>
+
+        <span className="gallery-label">
+          Ảnh minh họa, không phải ảnh chụp phòng này · Dữ liệu demo
+        </span>
       </div>
       <div className="detail-layout">
         <div>
@@ -119,15 +121,17 @@ export function DetailScreen({ id }: { id: string }) {
             </span>
             <span>
               <Icon name="sun" />
-              Ánh sáng tự nhiên
+              {room.view || "Chưa khai báo hướng nhìn"}
             </span>
           </div>
           <section className="detail-section">
-            <h2>Chút thông tin về căn phòng</h2>
+            <h2>Thông tin phòng</h2>
             <p>
-              Một không gian thoải mái cho việc học và những ngày nghỉ ngơi.
-              Phòng nằm trong cụm địa danh mẫu quanh Làng Đại học, phù hợp cho
-              sinh viên và người đi làm tìm nơi ở lâu dài.
+              {room.kind || "Phòng"} {room.size} m², tối đa {room.capacity}{" "}
+              người. Thời hạn thuê mẫu:{" "}
+              {room.leaseMonths ? `${room.leaseMonths} tháng` : "chưa khai báo"}
+              . Các tiện ích đã khai báo ở bên dưới; bàn học, khu phơi đồ và
+              những mục chưa có cần hỏi thêm người đăng.
             </p>
             <div className="amenity-grid">
               {room.amenities.map((a) => (
@@ -151,8 +155,7 @@ export function DetailScreen({ id }: { id: string }) {
           <section className="detail-section" id="chi-phi">
             <div className="section-heading">
               <div>
-                <p className="eyebrow">KHÔNG BỎ SÓT KHOẢN NÀO</p>
-                <h2>Chi phí được kể rõ.</h2>
+                <h2>Chi phí mỗi tháng</h2>
               </div>
               <span className="pill">Ước tính</span>
             </div>

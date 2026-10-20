@@ -104,9 +104,8 @@ function Explore() {
   return (
     <main className="container section">
       <PageTitle
-        eyebrow="GẶP NGƯỜI CÙNG NHỊP SỐNG"
-        title="Một người bạn. Một khởi đầu."
-        description="Kết nối từ những điều thật sự quan trọng trong cuộc sống chung."
+        title="Tìm bạn ở ghép"
+        description="Chọn khu vực, ngân sách và thói quen. Xem lý do tương thích trước khi quan tâm."
         action={
           <Link href="/roommatch/ho-so" className="btn outline">
             <Icon name="sliders" size={17} />
@@ -150,8 +149,8 @@ function Explore() {
       )}
       {!data.profile.visible && tab !== "matches" ? (
         <Empty
-          title="Người bạn hợp bắt đầu từ chính bạn."
-          description="Hoàn thiện nhu cầu và thói quen để khám phá những kết nối phù hợp."
+          title="Tạo hồ sơ để xem gợi ý"
+          description="Nhập nhu cầu thuê và thói quen để lọc hồ sơ mẫu."
           action={
             <Link href="/roommatch/ho-so" className="btn primary">
               Tạo hồ sơ RoomMatch <Icon name="arrow" size={17} />
@@ -231,7 +230,7 @@ function Explore() {
                           Danh tính mẫu · Mô phỏng
                         </span>
                         <div className="person-image-name">
-                          <h2>{p.name}, 21</h2>
+                          <h2>{p.name}</h2>
                           <p>{p.school}</p>
                         </div>
                       </div>
@@ -399,11 +398,8 @@ function Explore() {
             )}
           </div>
           <aside className="match-sidebar">
-            <div className="panel">
-              <span className="feature-icon">
-                <Icon name="users" size={28} />
-              </span>
-              <h3>Ở ghép theo cách của bạn.</h3>
+            <div className="match-guidance">
+              <h3>Điều kiện kết nối</h3>
               <p className="muted">
                 Quan tâm hai chiều mới mở chat. Hãy trao đổi về giờ giấc, chi
                 phí và những khác biệt.

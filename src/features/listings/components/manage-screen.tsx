@@ -1,4 +1,5 @@
 "use client";
+import { presentListing } from "@/features/listings/lib/presentation";
 import Link from "next/link";
 import { useState } from "react";
 import { useDemo, uid } from "@/shared/lib/demo-store";
@@ -39,8 +40,7 @@ function Manage() {
   return (
     <main className="container section">
       <PageTitle
-        eyebrow="KHÔNG GIAN NGƯỜI ĐĂNG"
-        title="Quản lý những căn phòng."
+        title="Quản lý tin phòng"
         description="Giữ thông tin rõ ràng, cập nhật và đúng với tình trạng phòng."
         action={
           <Link className="btn primary" href="/dang-tin">
@@ -93,12 +93,15 @@ function Manage() {
         <div className="manage-list">
           {rooms.map((r) => (
             <article key={r.id} className="manage-card">
-              <img src={r.image} alt={r.title} />
+              <img
+                src={presentListing(r).image}
+                alt={presentListing(r).title}
+              />
               <div>
                 <span className={`status status-${r.status}`}>
                   {statusLabels[r.status]}
                 </span>
-                <h3>{r.title}</h3>
+                <h3>{presentListing(r).title}</h3>
                 <p className="muted">
                   {r.area} · {r.size} m²
                 </p>
@@ -172,7 +175,7 @@ function Manage() {
       ) : (
         <Empty
           title="Chưa có tin ở trạng thái này"
-          description="Tạo một tin mới và kể rõ mọi thông tin về căn phòng của bạn."
+          description="Nhập thông tin phòng, các khoản phí và điều kiện thuê."
           action={
             <Link className="btn primary" href="/dang-tin">
               Tạo tin mới
@@ -313,10 +316,7 @@ function ListingForm() {
   return (
     <main className="container narrow section">
       <PageTitle
-        eyebrow="CHIA SẺ MỘT KHÔNG GIAN"
-        title={
-          existing ? "Cập nhật tin phòng." : "Một căn phòng, một cơ hội mới."
-        }
+        title={existing ? "Sửa tin phòng" : "Đăng tin phòng"}
         description="Càng rõ thông tin, người thuê càng dễ tìm thấy nơi phù hợp."
       />
       <form
@@ -429,7 +429,7 @@ function ListingForm() {
             }
           />
         </label>
-        <h2>Từng khoản phí, từng đơn vị</h2>
+        <h2>Chi phí và tiền cọc</h2>
         <p className="muted">
           Chọn riêng trạng thái từng khoản. Chưa khai báo không được coi là miễn
           phí. Các khoản phụ thu là mức ước tính theo tháng; chuyển nhượng là

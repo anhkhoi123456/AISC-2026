@@ -119,14 +119,14 @@ function Navigation({ children }: { children: ReactNode }) {
               </span>
               AnTro<span className="brand-dot">.</span>
             </Link>
-            <p>Một căn phòng phù hợp. Một người bạn đồng hành.</p>
+            <p>Tìm phòng và bạn ở ghép quanh Làng Đại học.</p>
           </div>
           <div>
             <Link href="/tim-phong">Tìm nơi ở</Link>
             <Link href="/roommatch">Tìm bạn ở ghép</Link>
             <Link href="/hop-dong">Đọc hợp đồng mẫu</Link>
           </div>
-          <small>© 2026 AnTro · Dành cho những khởi đầu mới.</small>
+          <small>© 2026 AnTro · Frontend prototype</small>
         </div>
       </footer>
       <nav className="bottom-nav">

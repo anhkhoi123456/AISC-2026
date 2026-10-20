@@ -28,12 +28,12 @@ test("production routes support direct entry and refresh, including login alias"
     if (route.startsWith("/login")) {
       await expect(page).toHaveURL(/\/dang-nhap\?next=%2Froommatch/);
       await expect(
-        page.getByRole("heading", { name: "Rất vui gặp lại bạn." }),
+        page.getByRole("heading", { name: "Đăng nhập" }),
       ).toBeVisible();
     }
     if (route.startsWith("/phong"))
       await expect(
-        page.getByRole("heading", { name: "Một góc bình yên, đầy ánh sáng" }),
+        page.getByRole("heading", { name: "Phòng 28 m² có ban công và bếp riêng" }),
       ).toBeVisible();
     expect((await page.reload())?.status()).toBe(200);
     await expect(page.locator("main")).toBeVisible();

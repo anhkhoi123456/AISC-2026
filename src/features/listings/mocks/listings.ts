@@ -9,13 +9,11 @@ export const areas = [
 export const roomImages = [
   "/images/student-room.jpg",
   "/images/room-2.jpg",
-  "/images/room-3.jpg",
-  "/images/room-4.jpg",
 ];
 export const initialListings: Listing[] = [
   {
     id: "phong-ban-cong",
-    title: "Một góc bình yên, đầy ánh sáng",
+    title: "Phòng 28 m² có ban công và bếp riêng",
     area: areas[0],
     address: "Đường Hàn Thuyên, khu vực Làng Đại học",
     image: roomImages[0],
@@ -36,7 +34,7 @@ export const initialListings: Listing[] = [
   },
   {
     id: "studio-cua-so",
-    title: "Studio nhỏ, đủ đầy cho ngày mới",
+    title: "Studio 24 m² có cửa sổ, WC riêng",
     area: areas[1],
     address: "Đường Tạ Quang Bửu, khu vực Làng Đại học",
     image: roomImages[1],
@@ -60,7 +58,7 @@ export const initialListings: Listing[] = [
     title: "Căn phòng xanh bên khung cửa",
     area: areas[2],
     address: "Đường Nguyễn Du, khu vực Làng Đại học",
-    image: roomImages[2],
+    image: roomImages[0],
     price: 3600000,
     size: 32,
     capacity: 3,
@@ -78,10 +76,10 @@ export const initialListings: Listing[] = [
   },
   {
     id: "phong-gan-ktx",
-    title: "Ở gần hơn, sống thoải mái hơn",
+    title: "Phòng 22 m² có WC riêng, chỗ để xe",
     area: areas[3],
     address: "Khu dân cư gần KTX khu A",
-    image: roomImages[3],
+    image: roomImages[1],
     price: 2400000,
     size: 22,
     capacity: 2,
@@ -99,7 +97,7 @@ export const initialListings: Listing[] = [
   },
   {
     id: "tin-cua-ban",
-    title: "Phòng có gác gần UIT, giờ giấc tự do",
+    title: "Phòng 26 m² có bếp riêng, chỗ để xe",
     area: areas[0],
     address: "Đường Hàn Thuyên, Làng Đại học",
     image: roomImages[1],
