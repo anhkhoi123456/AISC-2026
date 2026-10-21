@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+npm-debug.log*
+test-results/
+playwright-report/
+.vscode/
+.idea/
+*.log
+*.pem
