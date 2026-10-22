@@ -23,6 +23,10 @@ npm start
 
 Có thể dùng cổng riêng: `npm start -- --hostname 127.0.0.1 --port 3100`. Không có deploy mới. Hướng dẫn hosting riêng cho team: [HOSTING.md](docs/HOSTING.md), cần cấu hình bảo vệ truy cập trên tài khoản hosting trước khi chia sẻ.
 
+`npm run dev` dùng Turbopack để giảm thời gian biên dịch khi chuyển trang. Nếu cần kiểm tra tương thích Webpack, dùng `npm run dev:webpack`. Sau khi đổi bundler cần dừng server cũ bằng Ctrl+C rồi chạy lại; không chạy hai dev server trong cùng thư mục. Lần đầu vào trang ở chế độ dev vẫn có thể phải biên dịch/tải JavaScript. Để trình diễn ổn định, dùng `npm run build` rồi `npm start`.
+
+Mock service mặc định không thêm độ trễ mạng giả; luồng đọc điều khoản vẫn có khoảng chờ minh họa được chỉ định riêng.
+
 ## Giới hạn cần nói rõ
 
 Đây là **một trình duyệt dùng mock service + localStorage**, không phải nhiều tài khoản trao đổi qua server. Mọi ảnh, tọa độ, danh tính, bằng chứng, hợp đồng và review ban đầu đều là mẫu. Không nhận tiền, giữ cọc, ký điện tử thật, gọi ngân hàng, OTP/eKYC/OAuth thật hoặc AI trả phí. Che liên hệ và kiểm tra quyền ở frontend không tạo bảo mật backend.
