@@ -1,8 +1,13 @@
 "use client";
 import { useDemo } from "@/shared/lib/demo-store";
-export function DemoActors() {
+export function DemoActors({ internal = false }: { internal?: boolean }) {
   const { data, update, busy } = useDemo();
-  if (data.status !== "active") return null;
+  if (
+    process.env.NODE_ENV !== "development" ||
+    !internal ||
+    data.status !== "active"
+  )
+    return null;
   return (
     <details className="actor-demo">
       <summary>Đổi người thao tác mẫu</summary>

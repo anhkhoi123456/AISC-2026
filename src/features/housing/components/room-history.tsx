@@ -22,8 +22,8 @@ export function RentalRequest({ room }: { room: Listing }) {
     <section className="detail-section">
       <h2>Yêu cầu thuê và nhận phòng</h2>
       <p>
-        {counts.available}/{counts.capacity} chỗ còn có thể tiếp nhận trong mô
-        hình demo. Chat và Match không giữ chỗ.
+        {counts.available}/{counts.capacity} chỗ còn có thể tiếp nhận. Yêu cầu
+        thuê chưa giữ chỗ.
       </p>
       {room.status !== "published" || !counts.available ? (
         <p className="warning">
@@ -42,12 +42,12 @@ export function RentalRequest({ room }: { room: Listing }) {
         <p role="status">
           Đã lưu yêu cầu.{" "}
           <Link className="text-btn" href="/noi-o">
-            Mở lượt thuê để bên còn lại phản hồi
+            Xem yêu cầu thuê
           </Link>
         </p>
       ) : (
         <details>
-          <summary>Kiểm tra thông tin và tạo yêu cầu thuê mẫu</summary>
+          <summary>Xem thông tin thuê</summary>
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -101,7 +101,7 @@ export function RentalRequest({ room }: { room: Listing }) {
                 </select>
               </label>
               <label>
-                Tình trạng và đồ dùng mẫu
+                Tình trạng và đồ dùng
                 <input
                   name="inventory"
                   required
@@ -110,7 +110,7 @@ export function RentalRequest({ room }: { room: Listing }) {
                 />
               </label>
               <label>
-                Chỉ số điện nhận phòng mẫu
+                Chỉ số điện khi nhận phòng
                 <input
                   name="electric"
                   type="number"
@@ -120,7 +120,7 @@ export function RentalRequest({ room }: { room: Listing }) {
                 />
               </label>
               <label>
-                Chỉ số nước nhận phòng mẫu
+                Chỉ số nước khi nhận phòng
                 <input
                   name="water"
                   type="number"
@@ -165,15 +165,14 @@ export function RentalRequest({ room }: { room: Listing }) {
 }
 export function RoomHistory({ room }: { room: Listing }) {
   const { data, command } = useDemo(),
-    reviews = validReviews(data, h.physicalId(room)),
-    a = h.actorId(data);
+    reviews = validReviews(data, h.physicalId(room));
   return (
     <>
       <section className="detail-section">
         <h2>Điểm đến quanh phòng</h2>
         <p className="fineprint">
-          Tọa độ phòng và điểm đến đều là mẫu. Haversine đường chim bay, không
-          phải quãng đường hoặc phút di chuyển.
+          Khoảng cách đường chim bay từ tọa độ mẫu, không phải quãng đường đi
+          thực tế.
         </p>
         <ul className="simple-list">
           {destinationCatalog(data).map((p) => {
@@ -192,8 +191,8 @@ export function RoomHistory({ room }: { room: Listing }) {
       <section className="detail-section">
         <h2>Đánh giá từ lượt ở đã kết thúc</h2>
         <p>
-          {reviews.length} đánh giá hợp lệ trong dữ liệu demo; không phải phản
-          hồi khách hàng thật. Đăng lại vẫn giữ cùng lịch sử phòng.
+          {reviews.length} đánh giá từ hồ sơ mẫu; chưa phải phản hồi khách hàng
+          thật.
         </p>
         {reviews.length === 0 ? (
           <p>Chưa có đánh giá đủ điều kiện.</p>
@@ -325,15 +324,6 @@ export function RoomHistory({ room }: { room: Listing }) {
               </li>
             ))}
         </ol>
-        <p className="fineprint">
-          Người xem hiện tại:{" "}
-          {a === h.OWNER
-            ? "Người đăng mẫu"
-            : a === h.ADMIN
-              ? "Admin mẫu"
-              : "Khách/người thuê"}
-          . Nhật ký mẫu mới chỉ ghi các thao tác thực hiện trong ứng dụng.
-        </p>
       </section>
     </>
   );

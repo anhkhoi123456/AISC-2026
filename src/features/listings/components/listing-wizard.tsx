@@ -103,10 +103,7 @@ function Wizard() {
     return (
       <main className="container narrow section">
         <h1>Tin phòng đã được lưu.</h1>
-        <p>
-          Tin chỉ xuất hiện công khai sau khi có xác minh và quyết định duyệt
-          mẫu.
-        </p>
+        <p>Tin chỉ hiển thị sau khi hồ sơ mẫu và nội dung được duyệt.</p>
         <Link className="btn primary" href="/quan-ly-tin">
           Về quản lý tin
         </Link>
@@ -171,7 +168,7 @@ function Wizard() {
     <main className="container narrow section">
       <PageTitle
         title={edit ? "Sửa tin phòng" : "Đăng tin phòng"}
-        description="Nháp tự lưu cục bộ ở từng bước. Thông tin chưa rõ được giữ đúng trạng thái."
+        description="Bản nháp được lưu trên thiết bị sau mỗi bước."
       />
       <ol className="wizard-steps">
         {["Phòng và vị trí", "Chi phí", "Điều kiện và ảnh", "Xem trước"].map(
@@ -201,15 +198,15 @@ function Wizard() {
             <>
               <h2>Phòng và vị trí</h2>
               <label>
-                Tư cách người đăng (tự khai mẫu)
+                Tư cách người đăng
                 <select
                   value={listing.posterCapacity || ""}
                   onChange={(e) => patch({ posterCapacity: e.target.value })}
                 >
                   <option value="">Chưa khai tư cách</option>
-                  <option>Chủ sở hữu (khai báo mẫu)</option>
-                  <option>Người có quyền cho thuê lại (mẫu)</option>
-                  <option>Người đang thuê tìm bạn (mẫu)</option>
+                  <option value="Chủ sở hữu (khai báo mẫu)">Chủ sở hữu</option>
+                  <option value="Người có quyền cho thuê lại (mẫu)">Người có quyền cho thuê lại</option>
+                  <option value="Người đang thuê tìm bạn (mẫu)">Người đang thuê tìm bạn</option>
                 </select>
               </label>
               <p>
@@ -229,7 +226,7 @@ function Wizard() {
                   ))}
                 </select>
               </label>
-              {field("address", "Địa chỉ mô tả mẫu", true)}
+              {field("address", "Địa chỉ phòng", true)}
               <div className="form-grid">
                 {numeric("size", "Diện tích (m²)", 5, 500)}
                 {numeric("capacity", "Số người tối đa", 1, 10)}
@@ -296,7 +293,7 @@ function Wizard() {
                     patch({ locationConfirmed: e.target.checked })
                   }
                 />
-                Xác nhận vị trí mẫu đã khai báo
+                Xác nhận vị trí đã khai báo
               </label>
               <p className="fineprint">
                 Có thể để trống vị trí. Không có tọa độ sẽ không tính khoảng
@@ -321,7 +318,7 @@ function Wizard() {
                   })
                 }
               >
-                Dùng bảng phí mẫu để thử
+                Điền bảng phí tham khảo
               </button>
               {feeKeys.map((k) => {
                 const f = fee(listing, k);
@@ -448,7 +445,7 @@ function Wizard() {
               <div className="form-grid">
                 {numeric("leaseMonths", "Thuê tối thiểu (tháng)", 1, 60)}
                 {numeric("floor", "Tầng", 0, 30)}
-                {numeric("roomNoise", "Mức ồn mẫu (1 yên tĩnh – 5 ồn)", 1, 5)}
+                {numeric("roomNoise", "Mức ồn (1 yên tĩnh – 5 ồn)", 1, 5)}
                 <label>
                   Cửa sổ / view
                   <select

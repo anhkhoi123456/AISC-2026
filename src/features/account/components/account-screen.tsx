@@ -7,7 +7,7 @@ import { Icon } from "@/shared/components/icon";
 const statuses = {
   guest: "Khách",
   pending: "Chưa hoàn tất xác minh",
-  active: "Đã kích hoạt demo",
+  active: "Hồ sơ mẫu đã xác nhận",
   review: "Chờ duyệt thủ công",
   rejected: "Xác minh chưa đạt",
   blocked: "Đang bị hạn chế",
@@ -15,7 +15,7 @@ const statuses = {
 export function AccountScreen() {
   const { data, update, notify, reset } = useDemo();
   const [deleting, setDeleting] = useState(false);
-  const [confirm, setConfirm] = useState(false);
+
   if (data.status === "guest")
     return (
       <main className="container section">
@@ -24,7 +24,7 @@ export function AccountScreen() {
           description="Đăng nhập để quản lý hồ sơ, tin đã lưu và các kết nối."
           action={
             <Link className="btn primary" href="/dang-nhap">
-              Đăng nhập demo
+              Đăng nhập
             </Link>
           }
         />
@@ -35,7 +35,7 @@ export function AccountScreen() {
       <PageTitle
         eyebrow="TÀI KHOẢN CỦA BẠN"
         title={`Chào ${data.name},`}
-        description="Xem trạng thái xác minh, hồ sơ ở ghép và dữ liệu demo đã lưu."
+        description="Quản lý hồ sơ, tin đã lưu và lượt thuê."
       />
       <div className="account-grid">
         <section className="panel">
@@ -86,7 +86,7 @@ export function AccountScreen() {
             className="text-btn danger"
             onClick={() => {
               update((s) => ({ ...s, status: "guest", role: "guest" }));
-              notify("Đã đăng xuất tài khoản demo.");
+              notify("Đã đăng xuất.");
             }}
           >
             <Icon name="logout" size={17} />
@@ -100,8 +100,8 @@ export function AccountScreen() {
             </span>
             <h2>Xác minh & độ tin cậy</h2>
             <p className="muted">
-              Từng bước xác minh mang một ý nghĩa riêng. Trong demo, toàn bộ kết
-              quả dưới đây chỉ là minh họa.
+              Các trạng thái bên dưới dùng hồ sơ mẫu, chưa xác minh giấy tờ hoặc
+              liên hệ ngoài thực tế.
             </p>
             <div className="trust-rows">
               {[
@@ -112,7 +112,7 @@ export function AccountScreen() {
                     : "Chưa xác nhận",
                 ],
                 [
-                  "Danh tính eKYC",
+                  "Danh tính",
                   data.status === "active"
                     ? "Đã xác minh mẫu"
                     : "Chưa xác minh",
@@ -127,7 +127,7 @@ export function AccountScreen() {
             </div>
             {data.status !== "active" && (
               <Link href="/xac-minh" className="btn primary">
-                Tiếp tục xác minh mô phỏng <Icon name="arrow" size={16} />
+                Tiếp tục kiểm tra hồ sơ <Icon name="arrow" size={16} />
               </Link>
             )}
             <details className="trust-details">
@@ -151,7 +151,7 @@ export function AccountScreen() {
                       `Giải trình tài khoản: ${String(f.get("appeal"))}`,
                     ],
                   }));
-                  notify("Đã lưu giải trình demo vào nhật ký vận hành.");
+                  notify("Đã lưu giải trình trên thiết bị.");
                   e.currentTarget.reset();
                 }}
               >
@@ -164,15 +164,11 @@ export function AccountScreen() {
             )}
           </section>
           <section className="panel demo-controls">
-            <h3>Điều khiển bản demo</h3>
-            <p className="muted">
-              Chỉ thay đổi trạng thái mô phỏng tại trình duyệt này.
-            </p>
+            <h3>Dữ liệu trên thiết bị</h3>
             <p>
-              Công cụ mô phỏng trạng thái nằm ở nút Công cụ demo trên header.
-              Xác minh thực hiện theo luồng OTP và danh tính mẫu.
+              Xóa thông tin tài khoản đã lưu trong trình duyệt này. Thao tác
+              không thể hoàn tác.
             </p>
-            <hr />
             {deleting ? (
               <div>
                 <p>
@@ -187,9 +183,7 @@ export function AccountScreen() {
                         localStorage.removeItem(key);
                     reset();
                     setDeleting(false);
-                    notify(
-                      "Đã xóa dữ liệu tài khoản demo và bản sao lưu cục bộ; khởi tạo lại seed khách.",
-                    );
+                    notify("Đã xóa dữ liệu tài khoản trên thiết bị.");
                   }}
                 >
                   Xác nhận xóa dữ liệu tài khoản
@@ -206,34 +200,7 @@ export function AccountScreen() {
                 className="btn danger-btn"
                 onClick={() => setDeleting(true)}
               >
-                Xóa dữ liệu tài khoản demo
-              </button>
-            )}
-            {confirm ? (
-              <div className="inline-actions">
-                <span>Xóa toàn bộ tiến trình demo?</span>
-                <button
-                  className="btn danger-btn"
-                  onClick={() => {
-                    reset();
-                    setConfirm(false);
-                  }}
-                >
-                  Đặt lại
-                </button>
-                <button
-                  className="btn outline"
-                  onClick={() => setConfirm(false)}
-                >
-                  Hủy
-                </button>
-              </div>
-            ) : (
-              <button
-                className="text-btn muted"
-                onClick={() => setConfirm(true)}
-              >
-                Đặt lại dữ liệu demo
+                Xóa dữ liệu trên thiết bị
               </button>
             )}
           </section>

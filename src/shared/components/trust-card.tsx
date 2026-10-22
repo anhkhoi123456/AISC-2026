@@ -20,7 +20,7 @@ export function TrustCard({ room }: { room: Listing }) {
           <small>/100</small>
         </span>
         <div>
-          <strong>Trust Score căn phòng · Demo</strong>
+          <strong>Điểm tham khảo căn phòng</strong>
           <p>
             {trust.score === null
               ? "Chưa đủ dữ liệu"
@@ -36,7 +36,7 @@ export function TrustCard({ room }: { room: Listing }) {
         trải nghiệm người từng ở là các thông tin riêng.
       </p>
       <div className="price-benchmark">
-        <strong>Khoảng giá tham khảo · Demo</strong>
+        <strong>Khoảng giá tham khảo</strong>
         <p>
           {price
             ? `${money(price.min)} – ${money(price.max)} / phòng / tháng`
@@ -84,7 +84,7 @@ export function TrustCard({ room }: { room: Listing }) {
             {new Date(trust.at).toLocaleDateString("vi-VN", {
               timeZone: "Asia/Ho_Chi_Minh",
             })}
-            . Công thức demo chưa hiệu chỉnh thực nghiệm, không bảo đảm an toàn.
+            . Công thức tham khảo chưa được hiệu chỉnh, không bảo đảm an toàn.
           </p>
           {data.status === "active" && (
             <form

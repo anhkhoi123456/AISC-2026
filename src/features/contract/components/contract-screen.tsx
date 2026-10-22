@@ -46,7 +46,7 @@ function ContractFlow() {
     <main className="container section">
       <PageTitle
         eyebrow="ĐỌC KỸ TRƯỚC KHI ĐẶT BÚT"
-        title="Đọc hợp đồng mẫu"
+        title="Kiểm tra điều khoản"
         description="Tìm các điều khoản đáng trao đổi bằng quy tắc từ khóa. Không upload file, không gọi AI."
       />
       <p className="info-note">

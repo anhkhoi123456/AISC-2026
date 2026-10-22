@@ -15,9 +15,7 @@ export function DestinationFilters({
   return (
     <fieldset className="destination-filters">
       <legend>Điểm đến và bán kính</legend>
-      <p className="fineprint">
-        Tọa độ mẫu · Haversine đường chim bay; không suy ra thời gian đi đường.
-      </p>
+      <p className="fineprint">Khoảng cách đường chim bay từ tọa độ mẫu.</p>
       {value.map((d, i) => (
         <div className="destination-row" key={i}>
           <label>
@@ -95,11 +93,6 @@ export function DestinationFilters({
       >
         Thêm điểm đến
       </button>
-      <p className="fineprint">
-        Bộ lọc hiện hỗ trợ vị trí, chi phí, loại phòng, thời hạn, thú cưng và
-        tiện nghi. Các bộ lọc nâng cao về giờ giấc, ngày vào và xác minh chưa áp
-        dụng tự động.
-      </p>
     </fieldset>
   );
 }

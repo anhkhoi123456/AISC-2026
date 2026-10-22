@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useDemo, uid } from "@/shared/lib/demo-store";
 import { Icon } from "./icon";
@@ -37,9 +37,6 @@ export function Empty({
 }) {
   return (
     <div className="empty">
-      <span className="empty-icon">
-        <Icon name="leaf" size={30} />
-      </span>
       <h3>{title}</h3>
       <p>{description}</p>
       {action}
@@ -56,6 +53,7 @@ export function Modal({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     d?.showModal();
@@ -65,13 +63,22 @@ export function Modal({
     <dialog
       ref={ref}
       className="modal"
+      aria-labelledby={titleId}
       onCancel={onClose}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        const r = e.currentTarget.getBoundingClientRect();
+        if (
+          e.target === e.currentTarget &&
+          (e.clientX < r.left ||
+            e.clientX > r.right ||
+            e.clientY < r.top ||
+            e.clientY > r.bottom)
+        )
+          onClose();
       }}
     >
       <div className="modal-head">
-        <h2>{title}</h2>
+        <h2 id={titleId}>{title}</h2>
         <button className="icon-btn" onClick={onClose} aria-label="Đóng">
           <Icon name="close" />
         </button>
@@ -90,12 +97,12 @@ export function Guard({ children }: { children: ReactNode }) {
         title={
           data.status === "blocked"
             ? "Tài khoản đang bị hạn chế"
-            : "Bắt đầu bằng một lời giới thiệu"
+            : "Đăng nhập để tiếp tục"
         }
         description={
           data.status === "blocked"
             ? "Bạn có thể xem trạng thái và gửi giải trình tại trang tài khoản."
-            : "Đăng nhập và hoàn tất xác minh mô phỏng để trải nghiệm tính năng này."
+            : "Đăng nhập và hoàn tất hồ sơ trước khi thực hiện thao tác này."
         }
         action={
           <Link
@@ -125,7 +132,7 @@ export function ReportButton({ target }: { target: string }) {
         className="text-btn muted"
         onClick={() => {
           if (data.status !== "active") {
-            notify("Hãy đăng nhập và hoàn tất xác minh demo để gửi báo cáo.");
+            notify("Hãy đăng nhập và hoàn tất hồ sơ để gửi báo cáo.");
             return;
           }
           setOpen(true);
@@ -136,7 +143,7 @@ export function ReportButton({ target }: { target: string }) {
       {open && (
         <Modal title="Bạn muốn báo cáo điều gì?" onClose={() => setOpen(false)}>
           <p className="muted">
-            Báo cáo demo sẽ được chuyển vào trang vận hành trên trình duyệt này.
+            Báo cáo được lưu trên thiết bị để xem xét; chưa gửi đến đội hỗ trợ.
           </p>
           <form
             onSubmit={(e) => {
@@ -156,7 +163,7 @@ export function ReportButton({ target }: { target: string }) {
                 ],
               }));
               setOpen(false);
-              notify("Đã gửi báo cáo demo. Cảm ơn bạn đã chia sẻ.");
+              notify("Đã lưu báo cáo trên thiết bị.");
             }}
           >
             <label>

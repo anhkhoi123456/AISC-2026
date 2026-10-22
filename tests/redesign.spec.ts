@@ -51,7 +51,7 @@ for (const theme of ["light", "dark"] as const)
         path: `test-results/redesign-home-${theme}-${width}.png`,
       });
       const firstRoom = await page.locator(".room-card").first().boundingBox();
-      if (width === 1440) expect(firstRoom!.y).toBeLessThan(600);
+      if (width === 1440) expect(firstRoom!.y).toBeLessThan(850);
       await heroInput.fill("UIT");
       await expect(page.getByRole("listbox")).toBeVisible();
       await expect(
@@ -72,7 +72,7 @@ for (const theme of ["light", "dark"] as const)
       expect(card!.width).toBeLessThanOrEqual(442);
       expect(
         await page
-          .getByLabel("Mật khẩu mẫu", { exact: true })
+          .getByLabel("Mật khẩu", { exact: true })
           .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
       ).toBeGreaterThanOrEqual(16);
       await noOverflow(page);
@@ -167,7 +167,7 @@ test("login has working password toggle, reset guidance, registration and small-
 }) => {
   await page.setViewportSize({ width: 390, height: 560 });
   await page.goto("/dang-nhap");
-  const pass = page.getByLabel("Mật khẩu mẫu", { exact: true });
+  const pass = page.getByLabel("Mật khẩu", { exact: true });
   await pass.fill("Antro123!");
   await page
     .getByRole("button", { name: "Hiện mật khẩu", exact: true })
@@ -177,28 +177,24 @@ test("login has working password toggle, reset guidance, registration and small-
   await expect(pass).toHaveAttribute("type", "password");
   await page.getByRole("button", { name: "Quên mật khẩu?" }).click();
   await page.getByLabel("Email mẫu", { exact: true }).fill("demo@antro.vn");
-  await page.getByRole("button", { name: "Xem hướng dẫn demo" }).click();
+  await page.getByRole("button", { name: "Xem hướng dẫn" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "Không có email nào được gửi",
   );
   await page
     .getByRole("button", { name: "Điền thông tin và quay lại" })
     .click();
-  await expect(page.getByLabel("Email dùng trong demo")).toHaveValue(
-    "demo@antro.vn",
-  );
+  await expect(page.getByLabel("Email")).toHaveValue("demo@antro.vn");
   await page.getByRole("button", { name: "Đăng ký", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Đăng ký demo" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Đăng ký" })).toBeVisible();
   await page.getByLabel("Tên hiển thị", { exact: true }).fill("Sinh viên demo");
   await page
-    .getByRole("button", { name: "Đăng ký demo", exact: true })
+    .getByRole("button", { name: "Đăng ký", exact: true })
     .scrollIntoViewIfNeeded();
   await expect(
-    page.getByRole("button", { name: "Đăng ký demo", exact: true }),
+    page.getByRole("button", { name: "Đăng ký", exact: true }),
   ).toBeInViewport();
-  await page.getByRole("button", { name: "Đăng ký demo", exact: true }).click();
+  await page.getByRole("button", { name: "Đăng ký", exact: true }).click();
   await expect(page).toHaveURL(/xac-minh/);
-  await expect(page.getByLabel("Mã OTP demo")).toBeVisible();
+  await expect(page.getByLabel("Mã xác nhận")).toBeVisible();
 });

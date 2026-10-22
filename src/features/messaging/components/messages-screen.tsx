@@ -44,17 +44,14 @@ function Messages() {
   }
   return (
     <main className="container section">
-      <PageTitle
-        title="Tin nhắn"
-        description="Trao đổi về phòng, chi phí và lịch xem phòng trong hội thoại mẫu."
-      />
+      <PageTitle title="Tin nhắn" description="" />
       {!chat ? (
         <Empty
           title="Chưa có cuộc trò chuyện nào"
           description="Kết nối qua RoomMatch hoặc liên hệ một tin phòng để bắt đầu."
           action={
             <Link href="/roommatch" className="btn primary">
-              Khám phá RoomMatch
+              Tìm bạn ở ghép
             </Link>
           }
         />
@@ -102,9 +99,7 @@ function Messages() {
               <div>
                 <strong>{chat.name}</strong>
                 <small>
-                  {chat.ended
-                    ? "Đã kết thúc"
-                    : "Hội thoại demo · Không gửi tới người thật"}
+                  {chat.ended ? "Đã kết thúc" : "Chỉ lưu trên thiết bị này"}
                 </small>
               </div>
               <button
@@ -138,7 +133,7 @@ function Messages() {
                   ))}
                   <small>
                     {m.time}
-                    {m.mine ? " · Đã lưu demo" : ""}
+                    {m.mine ? " · Đã lưu" : ""}
                   </small>
                 </div>
               ))}
@@ -242,15 +237,14 @@ function Messages() {
         >
           {action === "share" ? (
             <p>
-              Chỉ mở nội dung liên hệ được nhận diện khi cả hai đồng ý. Đối
-              phương là nhân vật mẫu; mô phỏng sự đồng ý của họ trong Công cụ
-              demo. Che trên frontend không bảo vệ dữ liệu trong localStorage
-              hoặc thay thế bảo mật backend.
+              Thông tin liên hệ chỉ hiện khi cả hai đồng ý. Hội thoại hiện dùng
+              người dùng mẫu nên chưa thể nhận sự đồng ý từ người thật. Dữ liệu
+              chỉ được che khi hiển thị, vẫn được lưu trên thiết bị.
             </p>
           ) : (
             <p>
-              Tin nhắn cũ vẫn được lưu trong demo. Quyền gửi tin mới sẽ đóng; bỏ
-              chặn không tự mở lại kết nối.
+              Tin nhắn cũ được giữ lại. Bạn sẽ không gửi được tin mới; bỏ chặn
+              không tự mở lại kết nối.
             </p>
           )}
           <div className="form-actions">
@@ -276,7 +270,7 @@ function Messages() {
                   ),
                 }));
                 setAction("");
-                notify("Đã kết thúc kết nối demo.");
+                notify("Đã kết thúc kết nối.");
               }}
             >
               Xác nhận

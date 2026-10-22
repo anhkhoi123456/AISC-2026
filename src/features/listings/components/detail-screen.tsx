@@ -60,7 +60,7 @@ export function DetailScreen({ id }: { id: string }) {
                   {
                     id: uid(),
                     mine: false,
-                    text: "Xin chào! Đây là hội thoại demo với người đăng tin. Bạn có thể thử gửi tin và đề nghị lịch xem phòng.",
+                    text: "Hội thoại mẫu, chỉ lưu trên thiết bị. Bạn có thể ghi lại câu hỏi về phòng hoặc lịch xem.",
                     time: "09:30",
                   },
                 ],
@@ -79,7 +79,6 @@ export function DetailScreen({ id }: { id: string }) {
       </div>
       <div className="detail-title">
         <div>
-          <p className="eyebrow">TIN PHÒNG DEMO</p>
           <h1>{room.title}</h1>
           <p className="muted">
             <Icon name="pin" size={16} /> {room.address}{" "}
@@ -102,14 +101,14 @@ export function DetailScreen({ id }: { id: string }) {
           }}
         >
           <Icon name="heart" size={17} />
-          {saved ? "Đã lưu tin" : "Lưu tin"}
+          {saved ? "Đã lưu phòng" : "Lưu phòng"}
         </button>
       </div>
       <div className="detail-gallery single-room-photo">
         <img src={room.image} alt={room.title} />
 
         <span className="gallery-label">
-          Ảnh minh họa, không phải ảnh chụp phòng này · Dữ liệu demo
+          Ảnh minh họa, không phải ảnh chụp phòng này
         </span>
       </div>
       <div className="detail-layout">
@@ -305,9 +304,8 @@ export function DetailScreen({ id }: { id: string }) {
             <div className="deposit-note">
               <Icon name="shield" />
               <p>
-                <strong>Cọc dự kiến: {money(c.deposit)} / người</strong>
-                <br />
-                Cọc bằng {room.depositMonths ?? 1} tháng tiền phòng, trình bày
+                <strong>Cọc dự kiến: {money(c.deposit)} / người</strong> Cọc
+                bằng {room.depositMonths ?? 1} tháng tiền phòng, trình bày
                 riêng. Tháng đầu và cọc: {money(c.initial)}
                 {!c.complete ? " + khoản chưa rõ" : ""}. Điều kiện hoàn cọc cần
                 thống nhất với người đăng.
@@ -364,7 +362,7 @@ export function DetailScreen({ id }: { id: string }) {
             </p>
           )}
           <p className="fineprint">
-            Chat demo · Không thực hiện đặt cọc trên AnTro
+            Hội thoại cục bộ · Không chuyển tiền trên AnTro
           </p>
           <div className="owner">
             <span className="avatar">{room.owner[0]}</span>

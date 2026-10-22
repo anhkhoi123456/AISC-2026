@@ -12,15 +12,11 @@ for (const width of [390, 1440])
     await page.goto("/dang-nhap");
     await finishDemoLogin(page);
     await page.goto("/phong/phong-ban-cong");
-    await page
-      .getByText("Kiểm tra thông tin và tạo yêu cầu thuê mẫu", { exact: true })
-      .click();
+    await page.getByText("Xem thông tin thuê", { exact: true }).click();
     await page
       .getByRole("button", { name: "Tạo yêu cầu thuê", exact: true })
       .click();
-    await page
-      .getByRole("link", { name: "Mở lượt thuê để bên còn lại phản hồi" })
-      .click();
+    await page.getByRole("link", { name: "Xem yêu cầu thuê" }).click();
     const picker = page.getByRole("combobox", { name: "Chọn lượt thuê" });
     const id = await picker
       .locator("option")
@@ -51,7 +47,7 @@ for (const width of [390, 1440])
     await expect(card).toContainText("Đang ở");
     await switchActor(page, "Người đăng mẫu");
     await card.getByText("Lập bảng phí kỳ thuê", { exact: true }).click();
-    await card.getByRole("button", { name: "Tạo bảng phí mẫu" }).click();
+    await card.getByRole("button", { name: "Lập bảng phí" }).click();
     await expect(card).toContainText("Chi phí tháng 2026-11: 2.040.000đ");
     await card
       .getByText("Đề xuất thay đổi cho lượt ở hiện tại", { exact: true })
@@ -65,7 +61,7 @@ for (const width of [390, 1440])
     await page.getByRole("button", { name: "Đánh dấu đã đọc" }).first().click();
     await page.goto("/noi-o");
     await picker.selectOption(id!);
-    await expect(card).toContainText("Giá đã thống nhất: 3.200.000đ");
+    await expect(card).toContainText("Giá đã ghi nhận: 3.200.000đ");
     await expect(card).toContainText("Chưa đồng ý");
     await card
       .getByRole("button", { name: "Không đồng ý đề xuất", exact: true })
@@ -99,7 +95,7 @@ for (const width of [390, 1440])
         "Chi phí mẫu rõ, bàn giao được hai phía xác nhận và lịch sử vẫn còn.",
       );
     await card
-      .getByRole("button", { name: "Gửi đánh giá lượt ở", exact: true })
+      .getByRole("button", { name: "Gửi đánh giá", exact: true })
       .click();
     await expect(
       card.getByRole("button", { name: "Cập nhật đánh giá", exact: true }),
@@ -191,15 +187,11 @@ test("3.0 mobile dark: permission before recruiting, cash deposit and Admin disp
   await page.goto("/dang-nhap");
   await finishDemoLogin(page);
   await page.goto("/phong/studio-cua-so");
-  await page
-    .getByText("Kiểm tra thông tin và tạo yêu cầu thuê mẫu", { exact: true })
-    .click();
+  await page.getByText("Xem thông tin thuê", { exact: true }).click();
   await page
     .getByRole("button", { name: "Tạo yêu cầu thuê", exact: true })
     .click();
-  await page
-    .getByRole("link", { name: "Mở lượt thuê để bên còn lại phản hồi" })
-    .click();
+  await page.getByRole("link", { name: "Xem yêu cầu thuê" }).click();
   const picker = page.getByRole("combobox", { name: "Chọn lượt thuê" }),
     id = await picker
       .locator("option")
@@ -229,7 +221,7 @@ test("3.0 mobile dark: permission before recruiting, cash deposit and Admin disp
   await expect(card).toContainText("Được phép mở tìm trong phạm vi chỗ trống");
   await switchActor(page, "Người thuê mẫu");
   await card
-    .getByRole("combobox", { name: "Phương thức trả mẫu" })
+    .getByRole("combobox", { name: "Phương thức thanh toán" })
     .selectOption("Tiền mặt mẫu");
   await card
     .getByRole("button", { name: "Khai đã thanh toán", exact: true })
@@ -257,12 +249,10 @@ test("3.0 mobile dark: permission before recruiting, cash deposit and Admin disp
   await card.getByRole("button", { name: "Gửi đối chiếu cọc" }).click();
   await switchActor(page, "Người thuê mẫu");
   await card.getByRole("button", { name: "Chưa đồng ý khoản cọc" }).click();
-  await card
-    .getByText("Gửi bằng chứng / bất đồng để Admin xem xét", { exact: true })
-    .click();
+  await card.getByText("Yêu cầu xem xét", { exact: true }).click();
   await card.getByLabel("Loại yêu cầu").selectOption("deposit");
   await card
-    .getByLabel("Mô tả bằng chứng mẫu")
+    .getByLabel("Thông tin và bằng chứng")
     .fill(
       "Biên bản mẫu ghi phòng bàn giao sạch; xin đối chiếu khoản khấu trừ.",
     );
@@ -304,7 +294,7 @@ test("3.0 mobile dark: permission before recruiting, cash deposit and Admin disp
   await picker.selectOption(id!);
   await expect(card).toContainText("Người thuê xác nhận đã nhận");
   await expect(
-    card.getByRole("button", { name: "Gửi đánh giá lượt ở", exact: true }),
+    card.getByRole("button", { name: "Gửi đánh giá", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(

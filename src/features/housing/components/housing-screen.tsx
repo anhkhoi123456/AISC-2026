@@ -48,16 +48,16 @@ export function HousingScreen() {
     <main className="container section">
       <PageTitle
         title="Nơi ở của tôi"
-        description="Lượt thuê, bàn giao và chi phí được lưu trong trình duyệt. Không ký hợp đồng hoặc chuyển tiền thật."
+        description="Hồ sơ lưu trên thiết bị này, chưa có ký kết hoặc thanh toán thật."
       />
       <DemoActors />
       {data.status !== "active" ? (
         <Empty
           title="Đăng nhập để quản lý lượt ở"
-          description="Xác minh tài khoản mẫu trước khi thực hiện các thao tác thuê."
+          description="Hoàn tất hồ sơ trước khi gửi yêu cầu thuê."
           action={
             <Link href="/dang-nhap?next=%2Fnoi-o" className="btn primary">
-              Đăng nhập demo
+              Đăng nhập
             </Link>
           }
         />
@@ -76,8 +76,7 @@ export function HousingScreen() {
           </div>
           {!stays.length && (
             <p className="empty-state">
-              Chưa có lượt thuê thuộc phía mẫu này. Mở chi tiết phòng để tạo yêu
-              cầu thuê; Match không tự tạo lượt ở.
+              Bạn chưa có lượt thuê. Mở trang phòng để gửi yêu cầu.
             </p>
           )}
           <label>
@@ -154,18 +153,16 @@ function StayCard({ stay: x }: { stay: Stay }) {
       <fieldset disabled={busy}>
         <legend className="sr-only">Thao tác lượt ở</legend>
         <p>
-          Giá đã thống nhất: <b>{money(x.snapshot.price)}/phòng/tháng</b> ·{" "}
+          Giá đã ghi nhận: <b>{money(x.snapshot.price)}/phòng/tháng</b> ·{" "}
           {x.sharers} người chia phí. Ngày dự kiến: {x.plannedDate}.{" "}
           {x.moveInDate && `Nhận thực tế: ${x.moveInDate}.`}{" "}
           {x.moveOutDate && `Rời: ${x.moveOutDate}.`}
         </p>
         <details>
-          <summary>
-            Hợp đồng và bàn giao mẫu · phiên bản {x.contract.version}
-          </summary>
+          <summary>Hồ sơ và bàn giao · phiên bản {x.contract.version}</summary>
           <p>
             {x.contract.mode === "paper"
-              ? "Bản tóm tắt hợp đồng giấy mẫu"
+              ? "Tóm tắt hợp đồng giấy mẫu"
               : "Bản xác nhận điện tử mô phỏng"}
           </p>
           <p>{x.contract.text}</p>
@@ -193,7 +190,7 @@ function StayCard({ stay: x }: { stay: Stay }) {
               URL.revokeObjectURL(url);
             }}
           >
-            Tải hồ sơ lượt ở mẫu
+            Tải hồ sơ lượt ở
           </button>
         </details>
         {x.status === "requested" && (
@@ -333,7 +330,7 @@ function StayCard({ stay: x }: { stay: Stay }) {
                   <input
                     name="reason"
                     required
-                    placeholder="Ví dụ: kết thúc thời hạn thuê mẫu"
+                    placeholder="Ví dụ: kết thúc thời hạn thuê"
                   />
                 </label>
                 <button className="btn outline">Gửi yêu cầu rời phòng</button>
@@ -431,7 +428,7 @@ function StayCard({ stay: x }: { stay: Stay }) {
                   <input name="reason" />
                 </label>
               </div>
-              <button className="btn outline">Tạo bảng phí mẫu</button>
+              <button className="btn outline">Lập bảng phí</button>
             </form>
           </details>
         )}
@@ -467,7 +464,10 @@ function StayCard({ stay: x }: { stay: Stay }) {
           <h3>Tiền cọc: {money(x.deposit.amount)}</h3>
           <p>
             {paymentLabels[x.deposit.payment]}
-            {x.deposit.method ? ` · ${x.deposit.method}` : ""} · Hoàn cọc:{" "}
+            {x.deposit.method
+              ? ` · ${x.deposit.method.replace(" mẫu", "")}`
+              : ""}{" "}
+            · Hoàn cọc:{" "}
             {x.deposit.refund === "received"
               ? "Người thuê xác nhận đã nhận"
               : x.deposit.refund === "declared"
@@ -683,17 +683,17 @@ function StayCard({ stay: x }: { stay: Stay }) {
                   minLength={10}
                   maxLength={1500}
                   defaultValue={review?.text}
-                  placeholder="Nêu trải nghiệm mẫu cụ thể; không đăng thông tin riêng tư."
+                  placeholder="Mô tả trải nghiệm của bạn; không đăng thông tin riêng tư."
                 />
               </label>
               <button className="btn primary">
-                {review ? "Cập nhật đánh giá" : "Gửi đánh giá lượt ở"}
+                {review ? "Cập nhật đánh giá" : "Gửi đánh giá"}
               </button>
             </form>
           </section>
         )}
         <details>
-          <summary>Gửi bằng chứng / bất đồng để Admin xem xét</summary>
+          <summary>Yêu cầu xem xét</summary>
           <form
             onSubmit={(e) => {
               const f = formData(e);
@@ -718,7 +718,7 @@ function StayCard({ stay: x }: { stay: Stay }) {
               </select>
             </label>
             <label>
-              Mô tả bằng chứng mẫu
+              Thông tin và bằng chứng
               <textarea
                 name="evidence"
                 required
@@ -774,10 +774,10 @@ function PaymentActions({
       {!owner && ["unpaid", "disputed"].includes(status) && (
         <>
           <label>
-            Phương thức trả mẫu
+            Phương thức thanh toán
             <select value={method} onChange={(e) => setMethod(e.target.value)}>
-              <option>Chuyển khoản mẫu</option>
-              <option>Tiền mặt mẫu</option>
+              <option value="Chuyển khoản mẫu">Chuyển khoản</option>
+              <option value="Tiền mặt mẫu">Tiền mặt</option>
             </select>
           </label>
           <button
@@ -811,8 +811,7 @@ function PaymentActions({
         </div>
       )}
       <p className="fineprint">
-        Ghi nhận mô phỏng giữa hai bên, không có nhận tiền hoặc đối soát ngân
-        hàng.
+        Chỉ ghi nhận trạng thái, không chuyển tiền hoặc đối soát ngân hàng.
       </p>
     </div>
   );
@@ -832,7 +831,7 @@ export function NotificationsScreen() {
       {!ready ? (
         <p role="status">Đang tải…</p>
       ) : !notices.length ? (
-        <p className="empty-state">Chưa có thông báo cho phía mẫu này.</p>
+        <p className="empty-state">Bạn chưa có thông báo.</p>
       ) : (
         <ul className="notice-list">
           {[...notices].reverse().map((n) => (

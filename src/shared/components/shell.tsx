@@ -13,16 +13,10 @@ const nav = [
 ];
 function Navigation({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const { data, toast, ready } = useDemo();
+  const { data, toast, ready, storageError } = useDemo();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className="demo-strip">
-        BẢN TRẢI NGHIỆM{" "}
-        <span>
-          • Dữ liệu mẫu, xác minh và hội thoại được mô phỏng trên trình duyệt
-        </span>
-      </div>
       <header className="site-header">
         <div className="nav-inner">
           <Link href="/" className="brand" aria-label="AnTro trang chủ">
@@ -99,6 +93,8 @@ function Navigation({ children }: { children: ReactNode }) {
           <nav className="mobile-dropdown">
             {[
               ...nav,
+              ["/noi-o", "Nơi ở của tôi"],
+              ["/thong-bao", "Thông báo"],
               ["/quan-ly-tin", "Quản lý tin"],
               ["/tai-khoan", "Tài khoản"],
               ["/yeu-thich", "Yêu thích"],
@@ -131,9 +127,19 @@ function Navigation({ children }: { children: ReactNode }) {
           <div>
             <Link href="/tim-phong">Tìm nơi ở</Link>
             <Link href="/roommatch">Tìm bạn ở ghép</Link>
-            <Link href="/hop-dong">Đọc hợp đồng mẫu</Link>
+            <Link href="/hop-dong">Kiểm tra điều khoản</Link>
           </div>
-          <small>© 2026 AnTro · Frontend prototype</small>
+          <div className="footer-meta">
+            <small>© 2026 AnTro</small>
+            <details className="site-disclosure">
+              <summary>Thông tin dữ liệu</summary>
+              <p>
+                Bản trải nghiệm dùng dữ liệu và hồ sơ mẫu. Thay đổi chỉ lưu trên
+                thiết bị này; chưa có xác minh giấy tờ, gửi tin cho người thật
+                hay giao dịch thanh toán.
+              </p>
+            </details>
+          </div>
         </div>
       </footer>
       <nav className="bottom-nav">
@@ -150,6 +156,11 @@ function Navigation({ children }: { children: ReactNode }) {
           ),
         )}
       </nav>
+      {storageError && (
+        <p role="alert" className="warning storage-warning">
+          {storageError}
+        </p>
+      )}
       {toast && (
         <div role="status" className="toast">
           <Icon name="check" />

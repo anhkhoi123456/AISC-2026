@@ -1,4 +1,4 @@
-import { publishProfile, switchActor } from "./helpers";
+import { finishDemoLogin, publishProfile, switchActor } from "./helpers";
 import { test, expect } from "@playwright/test";
 let runtimeErrors: string[] = [];
 test.beforeEach(async ({ page }) => {
@@ -10,16 +10,7 @@ test.afterEach(() => {
 });
 async function activate(page: import("@playwright/test").Page) {
   await page.goto("/dang-nhap");
-  await page.getByText("Trải nghiệm demo", { exact: true }).click();
-  await page.getByLabel("Tên hiển thị").fill("Minh Anh");
-  await page.getByLabel("Email dùng trong demo").fill("demo@example.com");
-  await page
-    .getByRole("button", { name: "Tiếp tục với tài khoản demo" })
-    .click();
-  await page.getByLabel("Mã OTP demo").fill("123456");
-  await page.getByRole("button", { name: "Xác nhận và tiếp tục" }).click();
-  await page.getByRole("button", { name: "Xem kết quả mô phỏng" }).click();
-  await page.getByRole("button", { name: "Tiếp tục sử dụng demo" }).click();
+  await finishDemoLogin(page);
   await expect(
     page.getByRole("heading", { name: "Chào Minh Anh," }),
   ).toBeVisible();
@@ -44,7 +35,7 @@ test("guest sees rooms, budget respects unknown costs, and money uses per-person
     .getByRole("combobox", { name: "Số người", exact: true })
     .selectOption("1");
   await expect(page.locator(".cost-total strong")).toHaveText("3.520.000đ");
-  await page.getByRole("button", { name: "Lưu tin", exact: true }).click();
+  await page.getByRole("button", { name: "Lưu phòng", exact: true }).click();
   await expect(page).toHaveURL(/dang-nhap/);
 });
 test("verification, saved listing, mutual match, persistent chat and block", async ({
@@ -52,17 +43,17 @@ test("verification, saved listing, mutual match, persistent chat and block", asy
 }) => {
   await activate(page);
   await page.goto("/phong/phong-ban-cong");
-  await page.getByRole("button", { name: "Lưu tin", exact: true }).click();
+  await page.getByRole("button", { name: "Lưu phòng", exact: true }).click();
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Đã lưu tin", exact: true }),
+    page.getByRole("button", { name: "Đã lưu phòng", exact: true }),
   ).toBeVisible();
   await page.goto("/roommatch/ho-so");
   await publishProfile(page);
   const linh = page.locator(".person-card").filter({ hasText: "Ngọc Linh" });
   await linh.getByRole("button", { name: "Quan tâm", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("link", { name: "Gửi lời chào đầu tiên" }).click();
+  await page.getByRole("link", { name: "Nhắn tin" }).click();
   await page
     .getByLabel("Nội dung tin nhắn")
     .fill("Chào Linh, mình cùng xem phòng nhé!");
@@ -93,11 +84,11 @@ test("listing submission stays private until approved with audit reason", async 
     .getByLabel("Tiêu đề", { exact: true })
     .fill("Căn phòng kiểm thử gần trường");
   await page
-    .getByLabel("Địa chỉ mô tả mẫu")
+    .getByLabel("Địa chỉ phòng")
     .fill("Địa chỉ minh họa quanh Làng Đại học");
-  await page.getByLabel("Xác nhận vị trí mẫu đã khai báo").check();
+  await page.getByLabel("Xác nhận vị trí đã khai báo").check();
   await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
-  await page.getByRole("button", { name: "Dùng bảng phí mẫu để thử" }).click();
+  await page.getByRole("button", { name: "Điền bảng phí tham khảo" }).click();
   await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await page.getByRole("button", { name: "Gửi duyệt", exact: true }).click();

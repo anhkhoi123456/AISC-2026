@@ -18,26 +18,32 @@ export function RoomCard({
   reason?: string;
   preview?: boolean;
 }) {
-  const room = presentListing(storedRoom);
-  const { data, update, notify } = useDemo();
-  const router = useRouter();
-  const saved = data.saved.includes(room.id);
-  const c = cost(room, Math.min(people, room.capacity));
+  const room = presentListing(storedRoom),
+    { data, update, notify } = useDemo(),
+    router = useRouter();
+  const saved = data.saved.includes(room.id),
+    sharers = Math.min(people, room.capacity),
+    c = cost(room, sharers),
+    places = occupancy(data, physicalId(room));
   return (
     <article className="room-card">
       <div className="room-photo">
         {preview ? (
           <img src={room.image} alt="Ảnh minh họa xem trước" />
         ) : (
-          <Link href={`/phong/${room.id}`} tabIndex={-1}>
-            <img src={room.image} alt={room.title} />
+          <Link
+            href={`/phong/${room.id}`}
+            aria-label={`Xem phòng: ${room.title}`}
+            tabIndex={-1}
+          >
+            <img src={room.image} alt="" loading="lazy" />
           </Link>
         )}
-
+        {room.demo && <span className="room-photo-caption">Ảnh minh họa</span>}
         <button
           type="button"
           disabled={preview}
-          aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}
+          aria-label={saved ? "Bỏ lưu phòng" : "Lưu phòng"}
           aria-pressed={saved}
           className={`save-btn ${saved ? "saved" : ""}`}
           onClick={() => {
@@ -53,17 +59,13 @@ export function RoomCard({
                 ? s.saved.filter((id) => id !== room.id)
                 : [...s.saved, room.id],
             }));
-            notify(saved ? "Đã bỏ lưu tin." : "Đã thêm vào tin đã lưu.");
+            notify(saved ? "Đã bỏ lưu phòng." : "Đã lưu phòng.");
           }}
         >
-          <Icon name="heart" size={19} />
+          <Icon name="heart" size={20} />
         </button>
       </div>
       <div className="room-content">
-        <p className="room-location">
-          <Icon name="pin" size={13} />
-          {room.area}
-        </p>
         <h3>
           {preview ? (
             room.title
@@ -71,50 +73,50 @@ export function RoomCard({
             <Link href={`/phong/${room.id}`}>{room.title}</Link>
           )}
         </h3>
-        {!preview && (
-          <p className="room-data-note">
-            Còn {occupancy(data, physicalId(room)).available}/
-            {occupancy(data, physicalId(room)).capacity} chỗ theo ghi nhận demo
-          </p>
-        )}
-        <div className="room-specs">
-          <span>
-            <Icon name="area" size={15} />
-            {room.size} m²
-          </span>
-          <span>
-            <Icon name="users" size={15} />
-            {room.capacity} người
-          </span>
-          <span>{room.amenities[0]}</span>
-        </div>
+        <p className="room-location">
+          <Icon name="pin" size={15} />
+          {room.area}
+        </p>
         <div className="room-price">
           <div>
             <strong>{money(room.price)}</strong>
-            <span> / phòng / tháng</span>
+            <span> / tháng</span>
           </div>
           <p>
             {c.complete ? "Tổng ước tính" : "Khoản đã biết"}{" "}
-            <b>{money(c.total)}</b>
+            <b className="money">{money(c.total)}</b>
             <span> / người</span>
           </p>
+        </div>
+        <div className="room-specs">
+          <span>{room.size} m²</span>
+          <span>Tối đa {room.capacity} người</span>
+          {room.amenities[0] && <span>{room.amenities[0]}</span>}
         </div>
         <p className="room-conditions">
           {room.leaseMonths
             ? `Thuê từ ${room.leaseMonths} tháng`
-            : "Chưa khai báo thời hạn"}{" "}
+            : "Chưa rõ thời hạn thuê"}{" "}
           ·{" "}
           {room.pets
-            ? "Có nhận thú cưng, xem điều kiện"
+            ? "Cho nuôi thú cưng, xem điều kiện"
             : "Không nuôi thú cưng"}
         </p>
-        <p className="room-data-note">
-          {Math.min(people, room.capacity)} người · 120 kWh/phòng · 1 xe/người ·{" "}
-          {room.demo ? "Demo, ảnh minh họa" : "Ảnh do người đăng cung cấp"}
-        </p>
+        {!preview && (
+          <p className="room-data-note">
+            Còn {places.available}/{places.capacity} chỗ theo hồ sơ hiện tại
+          </p>
+        )}
+        <details className="cost-assumptions">
+          <summary>Cách tính chi phí</summary>
+          <p>
+            {sharers} người chia phòng · 120 kWh/phòng · 1 xe/người. Khoản có
+            điều kiện xem trong chi tiết phòng.
+          </p>
+        </details>
         {!c.complete && (
           <p className="warning-text">
-            Còn khoản phí chưa khai báo. Xem chi tiết trước khi so sánh.
+            Còn phí chưa rõ. Tổng trên chưa bao gồm các khoản này.
           </p>
         )}
         {reason && <p className="warning-text">{reason}</p>}

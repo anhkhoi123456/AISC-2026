@@ -19,6 +19,25 @@ import {
 } from "@/services/roommatch";
 import { userTrustScore } from "@/services/user-trust";
 import { money } from "@/features/listings/lib/cost";
+const formatReason = (value: string) => {
+  const text = value.replace(/\b\d{6,}\b/g, (n) =>
+    Number(n).toLocaleString("vi-VN"),
+  );
+  const parts = text.split(/(\d[\d.]*–\d[\d.]*\s*đ\/người)/g);
+  return (
+    <span>
+      {parts.map((part, i) =>
+        i % 2 ? (
+          <span className="money" key={i}>
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </span>
+  );
+};
 export function RoommatchScreen() {
   return (
     <Guard>
@@ -155,7 +174,7 @@ function Explore() {
       {!data.profile.visible && tab !== "matches" ? (
         <Empty
           title="Tạo hồ sơ để xem gợi ý"
-          description="Nhập nhu cầu thuê và thói quen để lọc hồ sơ mẫu."
+          description="Thêm khu vực, ngân sách và thói quen để bắt đầu."
           action={
             <Link href="/roommatch/ho-so" className="btn primary">
               Tạo hồ sơ RoomMatch <Icon name="arrow" size={17} />
@@ -265,12 +284,12 @@ function Explore() {
                                 ? "Kết nối cũ · Trao đổi lại nhu cầu"
                                 : result.score === null
                                   ? "Chưa có tiêu chí mềm để chấm điểm"
-                                  : "Điểm phù hợp hai chiều · Demo"}
+                                  : "Điểm phù hợp hai chiều"}
                             </small>
                           </div>
                         </div>
                         <p className="user-trust">
-                          User Trust:{" "}
+                          Điểm hồ sơ mẫu:{" "}
                           {
                             userTrustScore({
                               otp: true,
@@ -318,7 +337,7 @@ function Explore() {
                           {result.good.map((g) => (
                             <p key={g}>
                               <Icon name="check" size={15} />
-                              {g}
+                              {formatReason(g)}
                             </p>
                           ))}
                           <details>
@@ -340,7 +359,7 @@ function Explore() {
                           </details>
                           {result.different.map((g) => (
                             <p key={g} className="warning-text">
-                              {g}
+                              {formatReason(g)}
                             </p>
                           ))}
                           {result.ab !== null && result.ba !== null && (
@@ -348,10 +367,9 @@ function Explore() {
                               <summary>Cách tính điểm</summary>
                               <p>
                                 A→B: {result.ab.toFixed(1)} · B→A:{" "}
-                                {result.ba.toFixed(1)}
-                                <br />
-                                Làm tròn √(A→B × B→A) = {result.score}. Trọng số
-                                theo đặc tả, mức quan trọng do mỗi bên chọn.
+                                {result.ba.toFixed(1)} Làm tròn √(A→B × B→A) ={" "}
+                                {result.score}. Trọng số theo mức quan trọng do
+                                mỗi bên chọn.
                               </p>
                             </details>
                           )}
@@ -414,7 +432,7 @@ function Explore() {
             ) : (
               <Empty
                 title="Chưa có thêm hồ sơ đạt điều kiện."
-                description="Bộ dữ liệu mẫu được giữ gọn. AnTro không nới điều kiện bắt buộc khi hết thẻ."
+                description="Bạn đã xem hết hồ sơ đạt điều kiện. Có thể sửa nhu cầu hoặc hoàn tác lượt gần nhất."
                 action={
                   <button
                     className="btn outline"
@@ -451,10 +469,9 @@ function Explore() {
               </button>
             </div>
             <p className="fineprint">
-              Ngọc Linh đã quan tâm bạn trong kịch bản mẫu. Điểm phù hợp không
-              phải xác suất sống chung thành công. Giới tính từ danh tính mẫu,
-              mặc định cùng giới là giả định demo. Thời gian đi lại là số phút
-              mẫu do người dùng khai, không phải đo bản đồ.
+              Điểm so sánh nhu cầu và thói quen, không bảo đảm hợp nhau khi ở
+              chung. Thời gian đi lại do người dùng khai, không phải số đo từ
+              bản đồ.
             </p>
           </aside>
         </div>
@@ -465,17 +482,13 @@ function Explore() {
             <span className="match-celebration">
               <Icon name="users" size={45} />
             </span>
-            <h2>
-              Bạn và {matched}
-              <br />
-              đều muốn kết nối.
-            </h2>
-            <p>Bắt đầu bằng câu chuyện về nơi ở tiếp theo.</p>
+            <h2>Bạn và {matched} đều muốn kết nối.</h2>
+            <p>Trao đổi về phòng, ngân sách và thời gian dự định ở.</p>
             <Link className="btn primary full" href="/tin-nhan">
-              Gửi lời chào đầu tiên <Icon name="chat" size={18} />
+              Nhắn tin <Icon name="chat" size={18} />
             </Link>
             <button className="text-btn" onClick={() => setMatched("")}>
-              Tiếp tục khám phá
+              Xem hồ sơ tiếp theo
             </button>
           </div>
         </Modal>

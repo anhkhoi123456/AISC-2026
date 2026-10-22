@@ -80,9 +80,7 @@ function ProfileForm() {
         draftStep: visible ? 0 : step,
         lastSwipe: undefined,
       }));
-      notify(
-        visible ? "Đã bật hồ sơ RoomMatch demo." : "Đã lưu bản nháp hồ sơ.",
-      );
+      notify(visible ? "Đã bật hồ sơ ở ghép." : "Đã lưu bản nháp hồ sơ.");
       if (visible) router.push("/roommatch");
     } catch (e) {
       notify((e as Error).message);
@@ -92,7 +90,7 @@ function ProfileForm() {
     <main className="container narrow section">
       <PageTitle
         title="Hồ sơ ở ghép"
-        description="Nhu cầu phòng và thói quen cá nhân được khai riêng. Tất cả là dữ liệu mô phỏng."
+        description="Chọn khu vực, ngân sách và thói quen sinh hoạt của bạn."
       />
       <div className="stepper">
         {["Nhu cầu", "Phòng & chi phí", "Nhịp sống", "Ưu tiên", "Xem lại"].map(
@@ -115,9 +113,9 @@ function ProfileForm() {
           <>
             <h2>Nhu cầu thuê</h2>
             <p className="info-note">
-              Danh tính mẫu đã xác minh (chỉ đọc): {p.name} · {p.gender} ·{" "}
+              Danh tính mẫu (chỉ đọc): {p.name} · {p.gender} ·{" "}
               {data.identity?.birthYear} · {data.identity?.occupation}. Chỉ thay
-              mẫu trong Công cụ demo; không dùng giấy tờ thật.
+              trong công cụ nội bộ ở môi trường phát triển.
             </p>
             <div className="scenario-options">
               {["Chưa có phòng", "Đã có phòng"].map((v) => (
@@ -157,7 +155,7 @@ function ProfileForm() {
               </>
             )}
             <label>
-              Trường / nơi làm việc (điểm neo)
+              Trường hoặc nơi làm việc
               <select
                 value={p.anchor}
                 onChange={(e) => set("anchor", e.target.value)}

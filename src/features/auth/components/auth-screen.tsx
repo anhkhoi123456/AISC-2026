@@ -22,17 +22,17 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
         <div className="empty">
           <h1>Hãy đăng nhập trước nhé.</h1>
           <Link className="btn primary" href="/dang-nhap">
-            Đăng nhập demo
+            Đăng nhập
           </Link>
         </div>
       </main>
     );
   return (
     <main className="container narrow section">
-      <p className="eyebrow">XÁC MINH MÔ PHỎNG</p>
-      <h1>Xác minh tài khoản demo</h1>
+      <p className="eyebrow">Hồ sơ mẫu</p>
+      <h1>Kiểm tra hồ sơ</h1>
       <p className="muted">
-        Trải nghiệm luồng OTP và eKYC với dữ liệu mẫu. Không nhập giấy tờ thật.
+        Bước này dùng mã và danh tính mẫu, không xác minh giấy tờ thật.
       </p>
       <div className="stepper">
         {["Số điện thoại", "Danh tính", "Kết quả"].map((s, i) => (
@@ -53,20 +53,20 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                   identity: { ...s.identity!, otp: true },
                 }));
                 setStep(1);
-              } else notify("Mã demo là 123456. Bạn hãy thử lại.");
+              } else notify("Mã xác nhận mẫu là 123456.");
             }}
           >
             <h2>Xác nhận số điện thoại</h2>
             <p>
-              Hệ thống không gửi SMS. Sử dụng mã <strong>123456</strong> để thử
-              luồng.
+              Hệ thống không gửi SMS. Sử dụng mã <strong>123456</strong> để tiếp
+              tục.
             </p>
             <label>
               Số điện thoại mẫu
               <input value="090 000 0000" readOnly />
             </label>
             <label>
-              Mã OTP demo
+              Mã xác nhận
               <input
                 required
                 inputMode="numeric"
@@ -107,31 +107,37 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                 giả lập.
               </p>
             </div>
-            <fieldset>
-              <legend>Kịch bản kiểm tra mẫu</legend>
-              {[
-                ["active", "Mẫu hợp lệ"],
-                ["review", "Mẫu cần xem xét"],
-                ["rejected", "Mẫu không khớp"],
-              ].map(([v, t]) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={outcome === v ? "btn primary" : "btn outline"}
-                  aria-pressed={outcome === v}
-                  onClick={() => setOutcome(v)}
-                >
-                  {t}
-                </button>
-              ))}
-            </fieldset>
+            {process.env.NODE_ENV === "development" && (
+              <fieldset>
+                <legend>Kịch bản kiểm tra nội bộ</legend>
+                {[
+                  ["active", "Mẫu hợp lệ"],
+                  ["review", "Mẫu cần xem xét"],
+                  ["rejected", "Mẫu không khớp"],
+                ].map(([v, t]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className={outcome === v ? "btn primary" : "btn outline"}
+                    aria-pressed={outcome === v}
+                    onClick={() => setOutcome(v)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </fieldset>
+            )}
             <button
               className="btn primary full"
               onClick={() => {
                 update((s) => ({
                   ...s,
                   status: outcome as typeof s.status,
-                  identity: { ...s.identity!, verified: outcome === "active", checkedAt:new Date().toISOString() },
+                  identity: {
+                    ...s.identity!,
+                    verified: outcome === "active",
+                    checkedAt: new Date().toISOString(),
+                  },
                   profile: {
                     ...s.profile,
                     name: s.identity?.name ?? s.profile.name,
@@ -141,7 +147,7 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                 setStep(2);
               }}
             >
-              Xem kết quả mô phỏng
+              Xem kết quả
             </button>
           </div>
         ) : (
@@ -163,7 +169,7 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
             </h2>
             <p className="muted">
               {outcome === "active"
-                ? "Tài khoản demo đã kích hoạt. Bạn có thể lưu tin, kết nối và chat."
+                ? "Đã xác nhận hồ sơ mẫu. Bạn có thể lưu phòng và nhắn tin."
                 : outcome === "review"
                   ? "Yêu cầu mẫu đã chuyển vào khu vực vận hành. Bạn vẫn có thể xem phòng."
                   : "Kết quả mô phỏng chưa đạt. Bạn có thể chọn thử lại với dữ liệu mẫu khác."}
@@ -173,12 +179,12 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                 className="btn primary"
                 onClick={() => router.push(destination())}
               >
-                Tiếp tục sử dụng demo <Icon name="arrow" size={17} />
+                Tiếp tục <Icon name="arrow" size={17} />
               </button>
             ) : (
               <>
                 <button className="btn primary" onClick={() => setStep(1)}>
-                  Thử lại mô phỏng
+                  Kiểm tra lại
                 </button>
                 <Link className="btn outline" href="/tim-phong">
                   Xem phòng

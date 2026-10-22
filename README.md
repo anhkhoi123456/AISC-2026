@@ -31,9 +31,11 @@ Mock service mặc định không thêm độ trễ mạng giả; luồng đọc
 
 Đây là **một trình duyệt dùng mock service + localStorage**, không phải nhiều tài khoản trao đổi qua server. Mọi ảnh, tọa độ, danh tính, bằng chứng, hợp đồng và review ban đầu đều là mẫu. Không nhận tiền, giữ cọc, ký điện tử thật, gọi ngân hàng, OTP/eKYC/OAuth thật hoặc AI trả phí. Che liên hệ và kiểm tra quyền ở frontend không tạo bảo mật backend.
 
-Sau khi hoàn tất đăng nhập mẫu, vùng **Đổi người thao tác mẫu** cho diễn phản hồi Người thuê / Người đăng / Admin trên cùng bộ dữ liệu. Người đăng mẫu quản lý danh mục phòng được gán cho `owner-demo`; tài khoản người thuê vẫn có thể đăng tin riêng của mình, quyền sửa gắn mã người quản lý từng phòng. Không dùng việc đổi vai trò làm bằng chứng phân quyền thật.
+Trong development, sau khi hoàn tất đăng nhập, mở **Công cụ nội bộ → Đổi người thao tác mẫu** để diễn phản hồi Người thuê / Người đăng / Admin trên cùng bộ dữ liệu. Người đăng mẫu quản lý danh mục phòng được gán cho `owner-demo`; tài khoản người thuê vẫn có thể đăng tin riêng của mình, quyền sửa gắn mã người quản lý từng phòng. Không dùng việc đổi vai trò làm bằng chứng phân quyền thật.
 
-Login: mở **Trải nghiệm demo** → **Tiếp tục với tài khoản demo** → OTP **123456** → **Xác nhận và tiếp tục** → **Xem kết quả mô phỏng** → **Tiếp tục sử dụng demo**. Form cũng có email `demo@antro.vn`, mật khẩu mẫu `Antro123!`; không dùng mật khẩu hoặc giấy tờ thật.
+Đăng nhập cục bộ: nhập email và mật khẩu tối thiểu 6 ký tự (có thể dùng `demo@antro.vn` / `Antro123!`, không dùng mật khẩu thật) → mã xác nhận **123456** → **Xác nhận và tiếp tục** → **Xem kết quả** → **Tiếp tục**. Đây vẫn là hồ sơ mẫu, không có dịch vụ xác thực thật.
+
+Công cụ đổi vai trò/reset chỉ có ở **development**, trong biểu tượng Công cụ nội bộ trên header; các màn hình tác vụ không chèn panel đổi phía. Production không có công cụ đó và không render Admin. Xem [ghi nhận UI/UX và kiểm tra theo môi trường](docs/UI-UX-REVIEW.md).
 
 ## Các trang và hành vi
 
@@ -62,7 +64,7 @@ Login: mở **Trải nghiệm demo** → **Tiếp tục với tài khoản demo*
 
 Giữ key `antro-demo-v2`, envelope hiện là **version 4**. Migration v2/v3 giữ tin, hồ sơ, chat và lượt quan tâm, thêm mô hình căn phòng/đợt đăng; **không biến dữ liệu cũ thành lượt ở đã xác nhận**. Có thông báo và bản sao trước chuyển đổi `antro-demo-before-v4` (giữ backup v3 cũ). Chỗ/phòng dùng mã riêng, snapshot thuê không bị sửa bởi giá chào. Lượt ở, bill, review, quyết định và thông báo được lưu qua refresh. Dữ liệu housing hỏng được cô lập, giữ dữ liệu lõi và sao lưu nguyên bản; đầy/chặn bộ nhớ có cảnh báo, thay đổi còn trong phiên.
 
-Seed mới: 3 tin công khai, 1 chờ duyệt, 3 hồ sơ RoomMatch; phòng đầu có Khánh An đang ở mẫu và ba lượt lịch sử với ba review đủ điều kiện để trình diễn ngưỡng điểm. Phòng KTX thiếu điện và review, thể hiện đúng thông tin chưa đủ. Không cần tăng số mẫu. Bản dữ liệu cũ giữ nguyên, nên có thể chưa có lịch sử mẫu mới; muốn diễn seed mới, tải JSON hồ sơ lượt ở cần giữ (trong mục Hợp đồng và bàn giao mẫu) hoặc lưu bản sao localStorage trước rồi chủ động reset có xác nhận trong Công cụ demo. Không tự reset.
+Seed mới: 3 tin công khai, 1 chờ duyệt, 3 hồ sơ RoomMatch; phòng đầu có Khánh An đang ở mẫu và ba lượt lịch sử với ba review đủ điều kiện để trình diễn ngưỡng điểm. Phòng KTX thiếu điện và review, thể hiện đúng thông tin chưa đủ. Không cần tăng số mẫu. Bản dữ liệu cũ giữ nguyên, nên có thể chưa có lịch sử mẫu mới; muốn diễn seed mới, tải JSON hồ sơ lượt ở cần giữ (trong mục Hồ sơ và bàn giao) hoặc lưu bản sao localStorage trước rồi chủ động reset có xác nhận trong Công cụ nội bộ (development). Không tự reset.
 
 Màu **Sáng / Tối / Theo hệ thống** dùng key `antro-theme` riêng, áp dụng từ head tránh nháy sáng. Ảnh không đảo màu; [nguồn ảnh](public/images/SOURCES.md). Khi xóa dữ liệu trình duyệt có thể mất tiến trình; đây không phải sao lưu production.
 
@@ -80,8 +82,10 @@ npm run build
 npm start -- --hostname 127.0.0.1 --port 3100
 # Terminal khác:
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npm run test:e2e
+# Luồng đổi vai trò/Admin: chạy dev server rồi dùng:
+# ANTRO_INTERNAL_TOOLS=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
 ```
 
-Playwright hiện dùng Chrome có sẵn trên macOS theo `playwright.config.ts`; máy khác cần chỉnh executable/cài browser phù hợp. Test bao gồm quy tắc tiền, quyền hai chiều, chuyển trạng thái, chống lặp, migration, công thức điểm và các hành trình desktop/mobile. Ảnh/trace ở `test-results/` (ignored). Kết quả: lint, typecheck, production build và 32 unit test đạt; 27 bài trình duyệt đã đạt qua hai lượt kiểm tra. Chi tiết thực chạy và giới hạn nằm ở checklist nghiệm thu.
+Playwright hiện dùng Chrome có sẵn trên macOS theo `playwright.config.ts`; máy khác cần chỉnh executable/cài browser phù hợp. Test bao gồm quy tắc tiền, quyền hai chiều, chuyển trạng thái, chống lặp, migration, công thức điểm và các hành trình desktop/mobile. Ảnh/trace ở `test-results/` (ignored). Kết quả đợt UI/UX: lint, typecheck, build và 32 unit test đạt; 27 bài luồng development và 11 bài production đã đạt, các phần sửa tiếp được chạy lại riêng. Chi tiết và ảnh ở [UI-UX-REVIEW.md](docs/UI-UX-REVIEW.md); checklist nghiệp vụ 3.0 vẫn được giữ để đối chiếu.
 
 Chưa làm: backend/API/phân quyền server, cư trú/giấy tờ thật, ký/thu tiền/đối soát thật, ảnh upload, routing giao thông, AI, email/push/job 7/14 ngày, chống thông đồng, nhóm nhiều người, so sánh phòng bổ sung, bộ lọc nâng cao chưa ghi hỗ trợ, PWA, mở vùng và hạ tầng phục hồi production. Không có nút giả cho các phần này.

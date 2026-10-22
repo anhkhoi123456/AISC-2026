@@ -183,11 +183,7 @@ function Manage() {
           }
         />
       )}
-      <p className="info-note">
-        Tin gửi duyệt chưa xuất hiện trong tìm kiếm. Bạn có thể thử duyệt tại{" "}
-        Công cụ demo trên header. Lịch nhắc sau 7 ngày và tự ẩn sau 14 ngày chưa
-        chạy trong frontend.
-      </p>
+      <p className="fineprint">Tin chờ duyệt chưa hiển thị trong tìm kiếm.</p>
     </main>
   );
 }

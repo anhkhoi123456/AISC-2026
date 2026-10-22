@@ -22,6 +22,16 @@ export function AdminScreen() {
   } | null>(null);
   const [reason, setReason] = useState("");
   const [appeal, setAppeal] = useState("");
+  if (process.env.NODE_ENV !== "development")
+    return (
+      <main className="container narrow section">
+        <h1>Khu vực nội bộ</h1>
+        <p>
+          Công cụ vận hành cục bộ chỉ có ở môi trường phát triển. Bản trải
+          nghiệm chưa cung cấp quyền quản trị qua máy chủ.
+        </p>
+      </main>
+    );
   if (!entered)
     return (
       <main className="container narrow section">

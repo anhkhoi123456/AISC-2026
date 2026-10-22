@@ -119,7 +119,7 @@ export function HeroSearch() {
                     <Icon name="pin" size={17} />
                     <span>
                       {p.name}
-                      <small>{p.kind} · Địa điểm mẫu</small>
+                      <small>{p.kind}</small>
                     </span>
                   </button>
                 </li>
@@ -146,7 +146,7 @@ export function HeroSearch() {
         </button>
       </form>
       <div className="quick-places">
-        <span>Thử tìm:</span>
+        <span>Tìm nhanh:</span>
         {[
           ["Gần trường", "Trường", "home"],
           ["Gần metro", "Metro", "train"],
