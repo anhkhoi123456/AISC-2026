@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { physicalId } from "@/services/housing";
 import { useEffect, useState, useRef } from "react";
 import { useDemo } from "@/shared/lib/demo-store";
 import {
@@ -47,9 +48,13 @@ function Explore() {
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (current) {
-          setError("Không tải được gợi ý. Thử lại nhé.");
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Không tải được gợi ý. Thử lại nhé.",
+          );
           setLoading(false);
         }
       });
@@ -281,7 +286,14 @@ function Explore() {
                         </p>
                         {p.scenario === "Đã có phòng" && (
                           <Link
-                            href={"/phong/" + p.roomId}
+                            href={
+                              "/phong/" +
+                              (data.listings.find(
+                                (r) =>
+                                  physicalId(r) === p.roomId &&
+                                  r.status === "published",
+                              )?.id ?? p.roomId)
+                            }
                             className="text-btn"
                           >
                             Xem phòng đang có · {p.vacancies} chỗ trống
@@ -309,6 +321,23 @@ function Explore() {
                               {g}
                             </p>
                           ))}
+                          <details>
+                            <summary>Xem chi tiết hồ sơ</summary>
+                            <p>
+                              Khu vực ưu tiên: {p.areas.join(" → ")}. Ngân sách{" "}
+                              {money(p.min)}–{money(p.max)}/người. Ngày vào{" "}
+                              {p.moveFrom}–{p.moveTo}, thuê {p.months}–
+                              {p.monthsMax} tháng.
+                            </p>
+                            <p>
+                              Giờ ngủ: {p.sleep}; gọn gàng {p.tidy}/5; hút thuốc{" "}
+                              {p.smoke ? "có" : "không"}; thú cưng{" "}
+                              {p.pets ? "có" : "không"}; khách {p.guests}/5; mức
+                              ồn {p.noise}/5; ăn uống {p.food}; dọn dẹp{" "}
+                              {p.chores}. Giới tính khai báo mẫu: {p.gender},
+                              chưa xác minh thật.
+                            </p>
+                          </details>
                           {result.different.map((g) => (
                             <p key={g} className="warning-text">
                               {g}

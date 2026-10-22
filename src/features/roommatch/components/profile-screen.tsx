@@ -1,6 +1,7 @@
 "use client";
 import { presentListing } from "@/features/listings/lib/presentation";
 import Link from "next/link";
+import { physicalId } from "@/services/housing";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Profile, Criterion, Importance } from "@/shared/lib/models";
@@ -136,14 +137,17 @@ function ProfileForm() {
                   Phòng đang cần tìm bạn
                   <select
                     required
-                    value={p.roomId}
+                    value={
+                      data.listings.find((r) => r.id === p.roomId)?.roomId ??
+                      p.roomId
+                    }
                     onChange={(e) => set("roomId", e.target.value)}
                   >
                     <option value="">Chọn phòng mẫu</option>
                     {data.listings
                       .filter((r) => r.status === "published" && r.capacity > 1)
                       .map((r) => (
-                        <option key={r.id} value={r.id}>
+                        <option key={r.id} value={physicalId(r)}>
                           {presentListing(r).title}
                         </option>
                       ))}

@@ -131,7 +131,7 @@ export function AuthScreen({ verify = false }: { verify?: boolean }) {
                 update((s) => ({
                   ...s,
                   status: outcome as typeof s.status,
-                  identity: { ...s.identity!, verified: outcome === "active" },
+                  identity: { ...s.identity!, verified: outcome === "active", checkedAt:new Date().toISOString() },
                   profile: {
                     ...s.profile,
                     name: s.identity?.name ?? s.profile.name,

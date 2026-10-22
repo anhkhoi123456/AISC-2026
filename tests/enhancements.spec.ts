@@ -91,7 +91,7 @@ test("trust breakdown and insufficient price data are explicitly illustrated", a
   const score = await page.locator(".trust-number").textContent();
   await page.getByRole("button", { name: "Vì sao điểm này?" }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Đầy đủ thông tin & chi phí",
+    "M · Thông tin, chi phí và điều kiện",
   );
   await page.getByRole("button", { name: "Đóng", exact: true }).click();
   await page.reload();

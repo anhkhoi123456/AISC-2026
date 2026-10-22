@@ -1,4 +1,4 @@
-import { publishProfile } from "./helpers";
+import { publishProfile, switchActor } from "./helpers";
 import { test, expect } from "@playwright/test";
 let runtimeErrors: string[] = [];
 test.beforeEach(async ({ page }) => {
@@ -95,7 +95,15 @@ test("listing submission stays private until approved with audit reason", async 
   await page
     .getByLabel("Địa chỉ mô tả mẫu")
     .fill("Địa chỉ minh họa quanh Làng Đại học");
+  await page.getByLabel("Xác nhận vị trí mẫu đã khai báo").check();
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await page.getByRole("button", { name: "Dùng bảng phí mẫu để thử" }).click();
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await page.getByRole("button", { name: "Gửi duyệt", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tin phòng đã được lưu." }),
+  ).toBeVisible();
   await page.goto("/tim-phong");
   await expect(
     page.getByRole("link", {
@@ -104,6 +112,7 @@ test("listing submission stays private until approved with audit reason", async 
     }),
   ).toHaveCount(0);
   await page.goto("/admin");
+  await switchActor(page, "Admin mẫu");
   await page.getByRole("button", { name: "Mở bảng vận hành demo" }).click();
   const row = page
     .locator(".table-row")
@@ -113,6 +122,7 @@ test("listing submission stays private until approved with audit reason", async 
     .getByLabel("Lý do quyết định")
     .fill("Đã kiểm tra đủ thông tin mẫu cho demo.");
   await page.getByRole("button", { name: "Lưu quyết định" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/tim-phong");
   await expect(
     page
@@ -159,13 +169,17 @@ for (const width of [390, 1440])
 test("moderation hides a reported listing and restores it after review", async ({
   page,
 }) => {
+  await activate(page);
   await page.goto("/phong/phong-gan-ktx");
-  const base = Number(
+  const base = await page.locator(".trust-number").textContent();
+  /* No aggregate Trust score is manufactured for a room without valid reviews. */
+  const legacyBase = Number(
     await page
       .locator(".trust-number")
       .evaluate((el) => el.childNodes[0].textContent),
   );
   await page.goto("/admin");
+  await switchActor(page, "Admin mẫu");
   await page.getByRole("button", { name: "Mở bảng vận hành demo" }).click();
   await page.getByRole("button", { name: "Báo cáo & khiếu nại" }).click();
   await page.getByRole("button", { name: "Có vi phạm", exact: true }).click();
@@ -173,6 +187,7 @@ test("moderation hides a reported listing and restores it after review", async (
     .getByLabel("Lý do quyết định")
     .fill("Đã kiểm tra mẫu và tạm ẩn tin để bổ sung.");
   await page.getByRole("button", { name: "Lưu quyết định" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/tim-phong");
   await expect(page.locator(".room-card")).toHaveCount(2);
   await page.goto("/phong/phong-gan-ktx");
@@ -182,8 +197,10 @@ test("moderation hides a reported listing and restores it after review", async (
         .locator(".trust-number")
         .evaluate((el) => el.childNodes[0].textContent),
     ),
-  ).toBe(base - 10);
+  ).toBeNaN();
+  await expect(page.locator(".trust-number")).toHaveText(base!);
   await page.goto("/admin");
+  await switchActor(page, "Admin mẫu");
   await page.getByRole("button", { name: "Mở bảng vận hành demo" }).click();
   await page.getByRole("button", { name: "Báo cáo & khiếu nại" }).click();
   await page
@@ -193,6 +210,7 @@ test("moderation hides a reported listing and restores it after review", async (
     .getByLabel("Lý do quyết định")
     .fill("Rà soát lại dữ liệu mẫu, khôi phục trạng thái trước.");
   await page.getByRole("button", { name: "Lưu quyết định" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/tim-phong");
   await expect(page.locator(".room-card")).toHaveCount(3);
   await page.goto("/phong/phong-gan-ktx");
@@ -202,5 +220,7 @@ test("moderation hides a reported listing and restores it after review", async (
         .locator(".trust-number")
         .evaluate((el) => el.childNodes[0].textContent),
     ),
-  ).toBe(base);
+  ).toBeNaN();
+  await expect(page.locator(".trust-number")).toHaveText(base!);
+  void legacyBase;
 });

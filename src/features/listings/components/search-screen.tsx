@@ -1,4 +1,7 @@
 "use client";
+import { DestinationFilters } from "@/features/search/components-destinations";
+import { destinationName } from "@/services/geography";
+import { occupancy, physicalId } from "@/services/housing";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDemo } from "@/shared/lib/demo-store";
@@ -14,7 +17,8 @@ import {
   writeQuery,
   type SearchQuery,
 } from "@/features/search/lib/query";
-import { places, type Place } from "@/features/search/mocks/places";
+import { type Place } from "@/features/search/mocks/places";
+import { destinationCatalog } from "@/services/destinations";
 import { searchService } from "@/services/search";
 export function SearchScreen(props: { favorites?: boolean }) {
   return (
@@ -27,13 +31,14 @@ export function SearchScreen(props: { favorites?: boolean }) {
 }
 function SearchContent({ favorites = false }: { favorites?: boolean }) {
   const { data } = useDemo();
+  const catalog = useMemo(() => destinationCatalog(data), [data]);
   const router = useRouter(),
     pathname = usePathname(),
     params = useSearchParams();
   const serialized = params.toString();
   const q = useMemo(
-    () => readQuery(new URLSearchParams(serialized)),
-    [serialized],
+    () => readQuery(new URLSearchParams(serialized), catalog),
+    [serialized, catalog],
   );
   const [query, setQuery] = useState("");
   const [note, setNote] = useState("");
@@ -52,25 +57,30 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
   useEffect(() => {
     if (sourceQuery) {
       setQuery(sourceQuery);
-      const parsed = parseQuery(sourceQuery);
+      const parsed = parseQuery(sourceQuery, catalog);
       setUnknown(parsed.unknown);
       if (parsed.unknown.length)
         setNote(
           "Một phần nhu cầu chưa được hiểu. Hãy chỉnh bằng bộ lọc bên dưới.",
         );
     }
-  }, [sourceQuery]);
-  const suggestions = suggestPlaces(query);
+  }, [sourceQuery, catalog]);
+  const suggestions = suggestPlaces(query, catalog);
   const listings = useMemo(
-    () => data.listings.filter((r) => !favorites || data.saved.includes(r.id)),
-    [data.listings, data.saved, favorites],
+    () =>
+      data.listings.filter(
+        (r) =>
+          (!favorites || data.saved.includes(r.id)) &&
+          (favorites || occupancy(data, physicalId(r)).available > 0),
+      ),
+    [data, favorites],
   );
   useEffect(() => {
     let current = true;
     setLoading(true);
     setError("");
     searchService
-      .search(listings, q)
+      .search(listings, q, catalog)
       .then((r) => {
         if (current) {
           setResult(r);
@@ -86,19 +96,23 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
     return () => {
       current = false;
     };
-  }, [listings, q, retry]);
+  }, [listings, q, retry, catalog]);
   function change(patch: Partial<SearchQuery>) {
     const next = { ...q, ...patch };
     const qs = writeQuery(next);
     router.push(pathname + (qs ? "?" + qs : ""), { scroll: false });
   }
   function choose(p: Place) {
-    change({ place: p.id, area: p.area });
+    change({
+      place: p.id,
+      area: "",
+      destinations: [{ placeId: p.id, radiusKm: 2, mode: "must" }],
+    });
     setQuery(p.name);
     setOpen(false);
     setActive(-1);
     setNote(
-      "Địa điểm đã được chọn từ dữ liệu mẫu. Vị trí tìm theo cụm; chưa đo khoảng cách thực tế.",
+      "Địa điểm đã được chọn từ dữ liệu mẫu. Khoảng cách đường chim bay từ tọa độ mẫu, không phải thời gian đi đường.",
     );
   }
   function edit(id: string) {
@@ -109,14 +123,24 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
       field?.scrollIntoView({ block: "center", behavior: "smooth" });
     });
   }
-  const anchor = places.find((p) => p.id === q.place);
+  const anchor = catalog.find((p) => p.id === q.place);
   const chips: {
     key: string;
     label: string;
     clear: Partial<SearchQuery>;
     field: string;
   }[] = [];
-  if (anchor)
+  for (const [i, d] of q.destinations.entries())
+    chips.push({
+      key: `destination-${i}`,
+      label: `${destinationName(d.placeId, catalog)} ≤ ${d.radiusKm} km · ${d.mode === "must" ? "Bắt buộc" : "Ưu tiên"}`,
+      clear: {
+        destinations: q.destinations.filter((_, n) => n !== i),
+        place: "",
+      },
+      field: "area-filter",
+    });
+  if (anchor && !q.destinations.length)
     chips.push({
       key: "place",
       label: anchor.name,
@@ -188,7 +212,7 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
               choose(suggestions[active]);
               return;
             }
-            const parsed = parseQuery(query);
+            const parsed = parseQuery(query, catalog);
             change(parsed.patch);
             setUnknown(parsed.unknown);
             setOpen(false);
@@ -303,6 +327,10 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
               Đặt lại
             </button>
           </div>
+          <DestinationFilters
+            value={q.destinations}
+            onChange={(destinations) => change({ destinations, place: "" })}
+          />
           <label>
             Khu vực (bắt buộc)
             <select
@@ -465,8 +493,16 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
         <div className="search-results">
           <div className="results-toolbar">
             <span>
-              <strong>{result?.exact.length ?? 0} căn phòng</strong> phù hợp với
-              bạn
+              {loading ? (
+                "Đang tìm phòng…"
+              ) : error ? (
+                "Chưa tải được kết quả"
+              ) : (
+                <>
+                  <strong>{result?.exact.length ?? 0} căn phòng</strong> đạt bộ
+                  lọc
+                </>
+              )}
             </span>
             <button
               className="btn soft mobile-filter"
@@ -482,7 +518,8 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
             >
               <option value="new">Mới cập nhật</option>
               <option value="price">Chi phí thấp nhất</option>
-              <option value="trust">Điểm minh họa cao nhất</option>
+              <option value="distance">Khoảng cách đến điểm đầu tiên</option>
+              <option value="trust">Thông tin minh bạch hơn</option>
             </select>
           </div>
           {chips.length > 0 && (

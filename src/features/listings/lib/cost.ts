@@ -17,7 +17,7 @@ export function cost(room: Listing, people = 2, kwh = 120, vehicles = 1) {
     feeKeys.map((k) => [k, feeAmount(room, k)]),
   );
   const unknown = feeKeys.filter(
-    (k) => k !== "transfer" && amounts[k] === null,
+    (k) => !["transfer", "extraGuest"].includes(k) && amounts[k] === null,
   );
   const common =
     (room.price +
@@ -32,7 +32,6 @@ export function cost(room: Listing, people = 2, kwh = 120, vehicles = 1) {
   const extras =
     water +
     parking +
-    (amounts.extraGuest ?? 0) +
     (amounts.laundry ?? 0) +
     (common - room.price / people) +
     (electric ?? 0);
@@ -47,5 +46,11 @@ export function cost(room: Listing, people = 2, kwh = 120, vehicles = 1) {
     unknown,
     deposit: (room.price * (room.depositMonths ?? 1)) / people,
     transfer: amounts.transfer,
+    extraGuest: amounts.extraGuest,
+    initial:
+      room.price / people +
+      extras +
+      (room.price * (room.depositMonths ?? 1)) / people +
+      (room.price * Math.max(0, (room.advanceMonths ?? 1) - 1)) / people,
   };
 }

@@ -1,8 +1,9 @@
 import { areas } from "@/features/listings/mocks/listings";
 export type Place = {
+  location?: { lat: number; lng: number };
   id: string;
   name: string;
-  kind: "Trường" | "Metro" | "Siêu thị" | "Chợ" | "Bệnh viện";
+  kind: "Trường" | "Metro" | "Siêu thị" | "Chợ" | "Bệnh viện" | "Cây xăng";
   aliases: string[];
   area: string;
 };
@@ -85,3 +86,30 @@ export const places: Place[] = [
     area: areas[2],
   },
 ];
+
+// All coordinates below are synthetic demo points, not surveyed locations.
+const coordinates = [
+  [10.87, 106.8],
+  [10.879, 106.805],
+  [10.875, 106.799],
+  [10.873, 106.802],
+  [10.878, 106.803],
+  [10.871, 106.793],
+  [10.866, 106.802],
+  [10.861, 106.791],
+  [10.874, 106.797],
+  [10.872, 106.801],
+  [10.877, 106.798],
+];
+places.forEach((p, i) => {
+  p.location = { lat: coordinates[i][0], lng: coordinates[i][1] };
+});
+
+places.push({
+  id: "gas-station",
+  name: "Cây xăng khu Đại học (mẫu)",
+  kind: "Cây xăng",
+  aliases: ["cay xang", "tram xang"],
+  area: areas[1],
+  location: { lat: 10.869, lng: 106.805 },
+});

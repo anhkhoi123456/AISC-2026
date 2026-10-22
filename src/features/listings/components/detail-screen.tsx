@@ -1,5 +1,9 @@
 "use client";
 import { presentListing } from "../lib/presentation";
+import {
+  RentalRequest,
+  RoomHistory,
+} from "@/features/housing/components/room-history";
 import Link from "next/link";
 import { TrustCard } from "@/shared/components/trust-card";
 import { useRouter } from "next/navigation";
@@ -151,7 +155,39 @@ export function DetailScreen({ id }: { id: string }) {
               </span>
             </div>
           </section>
+          <section className="detail-section">
+            <h2>Xác minh người đăng</h2>
+            <p>
+              Tư cách:{" "}
+              {room.posterCapacity ||
+                "Người quản lý tin mẫu, chưa khai loại tư cách"}
+            </p>
+            <ul className="simple-list">
+              {(
+                [
+                  ["contact", "Liên hệ"],
+                  ["identity", "Danh tính"],
+                  ["rentalRight", "Tư cách/quyền cho thuê"],
+                ] as const
+              ).map(([key, label]) => (
+                <li key={key}>
+                  {label}:{" "}
+                  {room.verification?.[key]
+                    ? "Đạt theo duyệt mẫu"
+                    : "Chưa được xác nhận"}
+                  {room.verification?.[key] &&
+                    ` · ${new Date(room.verification.checkedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}`}
+                </li>
+              ))}
+            </ul>
+            <p className="fineprint">
+              Các loại xác minh độc lập, chỉ là dữ liệu mẫu. Xác minh danh tính
+              không chứng minh sở hữu hoặc lượt ở.
+            </p>
+          </section>
           <TrustCard room={room} />
+          <RentalRequest room={room} />
+          <RoomHistory room={room} />
           <section className="detail-section" id="chi-phi">
             <div className="section-heading">
               <div>
@@ -217,14 +253,20 @@ export function DetailScreen({ id }: { id: string }) {
                         {feeStatusLabels[f.status]}
                         {f.status === "charged"
                           ? " · " + money(f.amount ?? 0)
-                          : ""}
+                          : f.status === "included"
+                            ? " · trong " + (f.includedIn || "chưa rõ khoản")
+                            : ""}
                       </small>
                     </span>
                     <strong>
                       {f.status === "unknown"
                         ? "Chưa rõ"
-                        : k === "transfer"
-                          ? "Một lần"
+                        : ["transfer", "extraGuest"].includes(k)
+                          ? f.status === "none"
+                            ? "Không thu"
+                            : f.status === "charged"
+                              ? `${money(f.amount || 0)} · Chỉ khi phát sinh`
+                              : feeStatusLabels[f.status]
                           : k === "electricity"
                             ? c.electric === null
                               ? "Chưa rõ"
@@ -266,7 +308,7 @@ export function DetailScreen({ id }: { id: string }) {
                 <strong>Cọc dự kiến: {money(c.deposit)} / người</strong>
                 <br />
                 Cọc bằng {room.depositMonths ?? 1} tháng tiền phòng, trình bày
-                riêng. Tháng đầu và cọc: {money(c.total + c.deposit)}
+                riêng. Tháng đầu và cọc: {money(c.initial)}
                 {!c.complete ? " + khoản chưa rõ" : ""}. Điều kiện hoàn cọc cần
                 thống nhất với người đăng.
               </p>
@@ -277,8 +319,8 @@ export function DetailScreen({ id }: { id: string }) {
             <div className="info-note">
               Thời hạn thuê mẫu: tối thiểu {room.leaseMonths ?? 6} tháng. Hỏi rõ
               giờ giấc, khách ở lại, mức sử dụng điện nước và điều kiện chuyển
-              đi sớm. Xem trạng thái giá tham khảo trong khối Listing Trust phía
-              trên.
+              đi sớm. Xem trạng thái giá tham khảo trong khối Trust căn phòng
+              phía trên.
             </div>
             <ReportButton target={id} />
           </section>

@@ -8,7 +8,7 @@ import type { Role } from "@/shared/lib/models";
 import { Modal } from "./ui";
 import { Icon } from "./icon";
 export function DemoTools() {
-  const { data, update, reset, storageError } = useDemo();
+  const { data, update, reset, storageError, busy } = useDemo();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const router = useRouter();
@@ -37,6 +37,7 @@ export function DemoTools() {
           <label>
             Vai trò demo
             <select
+              disabled={busy}
               value={data.role}
               onChange={(e) => {
                 const role = e.target.value as Role;
@@ -69,6 +70,14 @@ export function DemoTools() {
             Chọn vai trò rồi hoàn tất đăng nhập → OTP → danh tính mẫu. Không có
             chuyển trực tiếp sang đã xác minh.
           </p>
+          <div className="inline-actions">
+            <Link href="/noi-o" onClick={() => setOpen(false)}>
+              Nơi ở của tôi
+            </Link>
+            <Link href="/thong-bao" onClick={() => setOpen(false)}>
+              Thông báo
+            </Link>
+          </div>
           <details>
             <summary>Thay dữ liệu danh tính mẫu</summary>
             <p>Thay mẫu sẽ yêu cầu xác minh lại và ẩn hồ sơ.</p>

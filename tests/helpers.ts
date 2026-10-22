@@ -16,3 +16,12 @@ export async function publishProfile(page: Page) {
     await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await page.getByRole("button", { name: "Bật hiển thị hồ sơ" }).click();
 }
+export async function switchActor(
+  page: Page,
+  name: "Người thuê mẫu" | "Người đăng mẫu" | "Admin mẫu",
+) {
+  const controls = page.locator(".actor-demo").first();
+  if (!(await controls.evaluate((el) => el.hasAttribute("open"))))
+    await controls.locator("summary").click();
+  await controls.getByRole("button", { name, exact: true }).click();
+}

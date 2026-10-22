@@ -44,6 +44,13 @@ function Navigation({ children }: { children: ReactNode }) {
                 )}
               </Link>
             ))}
+            <Link href="/noi-o">Nơi ở</Link>
+            <Link
+              href="/thong-bao"
+              aria-label={`Thông báo (${data.housing.notifications.filter((n) => !n.read && n.recipient === (data.role === "landlord" ? "owner-demo" : data.role === "admin" ? "admin-demo" : "tenant-demo")).length} chưa đọc)`}
+            >
+              Thông báo
+            </Link>
           </nav>
           <div className="nav-actions">
             <ThemePicker />

@@ -6,10 +6,7 @@ export const areas = [
   "KTX khu A",
   "KTX khu B",
 ];
-export const roomImages = [
-  "/images/student-room.jpg",
-  "/images/room-2.jpg",
-];
+export const roomImages = ["/images/student-room.jpg", "/images/room-2.jpg"];
 export const initialListings: Listing[] = [
   {
     id: "phong-ban-cong",
@@ -155,4 +152,31 @@ initialListings.forEach((r, i) => {
   r.leaseMonths ??= 6;
   r.rules ??=
     "Giờ giấc tự do. Giữ yên tĩnh sau 22h. Khách ở lại và chuyển đi sớm cần thống nhất trước.";
+});
+
+const sampleCoordinates = [
+  { lat: 10.8735, lng: 106.8006 },
+  { lat: 10.879, lng: 106.806 },
+  { lat: 10.867, lng: 106.793 },
+  { lat: 10.876, lng: 106.803 },
+];
+initialListings.forEach((r, i) => {
+  r.locationConfirmed=true;
+  r.roomId = r.id;
+  r.ownerId = "owner-demo";
+  r.location = sampleCoordinates[i];
+  r.verification = {
+    contact: true,
+    identity: true,
+    rentalRight: r.status === "published",
+    checkedAt: "2026-10-22T03:00:00Z",
+  };
+  r.advanceMonths = 1;
+  r.refundTerms =
+    "Đối chiếu khi bàn giao lại, khấu trừ chỉ khi có lý do và phản hồi.";
+  r.conditionalFees =
+    "Khách ở lại và chuyển nhượng phải thỏa thuận riêng; không cộng vào tháng bình thường.";
+  Object.values(r.feeStates || {}).forEach((f) => {
+    if (f.status === "included") f.includedIn = "Tiền thuê phòng";
+  });
 });

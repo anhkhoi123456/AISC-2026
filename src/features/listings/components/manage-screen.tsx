@@ -1,15 +1,21 @@
 "use client";
 import { presentListing } from "@/features/listings/lib/presentation";
+import { DemoActors } from "@/features/housing/components/housing-screen";
+import {
+  canManage,
+  relistRoom,
+  setListingStatus,
+  confirmAvailability,
+} from "@/services/housing";
+import { RoomManagement } from "@/features/housing/components/room-management";
 import Link from "next/link";
 import { useState } from "react";
-import { useDemo, uid } from "@/shared/lib/demo-store";
+import { useDemo } from "@/shared/lib/demo-store";
 import { Guard, PageTitle, Empty } from "@/shared/components/ui";
 import { Icon } from "@/shared/components/icon";
-import { areas, roomImages } from "../mocks/listings";
 import { money } from "../lib/cost";
-import { fee, feeKeys, feeLabels, feeStatusLabels } from "../lib/fees";
-import type { Fee, FeeKey, Listing, ListingStatus } from "@/shared/lib/models";
-import { statusLabels, canSubmit } from "../lib/status";
+import type { ListingStatus } from "@/shared/lib/models";
+import { statusLabels } from "../lib/status";
 export function ManageScreen() {
   return (
     <Guard>
@@ -18,24 +24,23 @@ export function ManageScreen() {
   );
 }
 function Manage() {
-  const { data, update, notify } = useDemo();
+  const { data, command } = useDemo();
   const [filter, setFilter] = useState("all");
   const rooms = data.listings.filter(
-    (r) => r.owner === "Bạn" && (filter === "all" || r.status === filter),
+    (r) => canManage(data, r) && (filter === "all" || r.status === filter),
   );
   function status(id: string, status: ListingStatus) {
-    const room = data.listings.find((r) => r.id === id);
-    if (status === "pending" && room && !canSubmit(room)) {
-      notify(
-        "Hãy chỉnh sửa và điền đủ thông tin bắt buộc trước khi gửi duyệt.",
+    if (["pending", "hidden", "closed"].includes(status))
+      command((s) =>
+        setListingStatus(
+          s,
+          id,
+          status as "pending" | "hidden" | "closed",
+          status === "pending"
+            ? "Gửi thông tin để Admin duyệt mẫu"
+            : "Người quản lý chủ động đổi trạng thái đợt tuyển mẫu",
+        ),
       );
-      return;
-    }
-    update((s) => ({
-      ...s,
-      listings: s.listings.map((r) => (r.id === id ? { ...r, status } : r)),
-    }));
-    notify("Đã cập nhật trạng thái tin demo.");
   }
   return (
     <main className="container section">
@@ -49,22 +54,24 @@ function Manage() {
           </Link>
         }
       />
+      <DemoActors />
+      <RoomManagement />
       <div className="stats-grid">
         {[
           [
             "Tin của bạn",
-            data.listings.filter((r) => r.owner === "Bạn").length,
+            data.listings.filter((r) => canManage(data, r)).length,
           ],
           [
             "Đang hiển thị",
             data.listings.filter(
-              (r) => r.owner === "Bạn" && r.status === "published",
+              (r) => canManage(data, r) && r.status === "published",
             ).length,
           ],
           [
             "Chờ duyệt",
             data.listings.filter(
-              (r) => r.owner === "Bạn" && r.status === "pending",
+              (r) => canManage(data, r) && r.status === "pending",
             ).length,
           ],
         ].map(([t, n]) => (
@@ -114,6 +121,12 @@ function Manage() {
                 <small className="muted">Xác nhận gần nhất: {r.updated}</small>
               </div>
               <div className="manage-actions">
+                <button
+                  className="text-btn"
+                  onClick={() => command((s) => relistRoom(s, r.id))}
+                >
+                  Đăng lại phòng này
+                </button>
                 <Link className="text-btn" href={"/phong/" + r.id}>
                   Xem tin <Icon name="arrow" size={15} />
                 </Link>
@@ -124,30 +137,17 @@ function Manage() {
                   <>
                     <button
                       className="btn soft"
-                      onClick={() => {
-                        update((s) => ({
-                          ...s,
-                          listings: s.listings.map((x) =>
-                            x.id === r.id
-                              ? {
-                                  ...x,
-                                  updated: new Intl.DateTimeFormat("en-CA", {
-                                    timeZone: "Asia/Ho_Chi_Minh",
-                                  }).format(new Date()),
-                                }
-                              : x,
-                          ),
-                        }));
-                        notify("Đã xác nhận phòng vẫn còn trống.");
-                      }}
+                      onClick={() =>
+                        command((s) => confirmAvailability(s, r.id))
+                      }
                     >
                       Xác nhận còn phòng
                     </button>
                     <button
                       className="text-btn muted"
-                      onClick={() => status(r.id, "rented")}
+                      onClick={() => status(r.id, "closed")}
                     >
-                      Đã cho thuê
+                      Đóng đợt tuyển
                     </button>
                     <button
                       className="text-btn muted"
@@ -191,418 +191,4 @@ function Manage() {
     </main>
   );
 }
-export function ListingFormScreen() {
-  return (
-    <Guard>
-      <ListingForm />
-    </Guard>
-  );
-}
-function ListingForm() {
-  const { data, update, notify } = useDemo();
-  const [id] = useState(() =>
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("edit")
-      : null,
-  );
-  const existing = data.listings.find((r) => r.id === id && r.owner === "Bạn");
-  const [image, setImage] = useState(existing?.image ?? roomImages[0]);
-  const [fees, setFees] = useState<Partial<Record<FeeKey, Fee>>>(
-    Object.fromEntries(
-      feeKeys.map((k) => [
-        k,
-        existing
-          ? fee(existing, k)
-          : {
-              status: [
-                "management",
-                "extraGuest",
-                "laundry",
-                "transfer",
-              ].includes(k)
-                ? "unknown"
-                : "charged",
-              amount:
-                k === "electricity"
-                  ? 3500
-                  : k === "water"
-                    ? 60000
-                    : k === "cleaning"
-                      ? 40000
-                      : 100000,
-            },
-      ]),
-    ),
-  );
-  const [submitted, setSubmitted] = useState(false);
-  function save(form: HTMLFormElement, status: ListingStatus) {
-    const f = new FormData(form);
-    const listing: Listing = {
-      id: existing?.id ?? uid(),
-      title: String(f.get("title")),
-      area: String(f.get("area")),
-      address: String(f.get("address")),
-      image,
-      feeStates: Object.fromEntries(
-        feeKeys.map((k) => [
-          k,
-          {
-            status: fees[k]!.status,
-            amount:
-              fees[k]!.status === "charged"
-                ? Number(f.get(k))
-                : fees[k]!.status === "unknown"
-                  ? null
-                  : 0,
-          },
-        ]),
-      ),
-      depositMonths: Number(f.get("depositMonths")),
-      allowedPets: f.getAll("allowedPets").map(String) as ("cat" | "dog")[],
-      floor: Number(f.get("floor")),
-      elevator: f.get("elevator") === "on",
-      view: String(f.get("view")),
-      roomNoise: Number(f.get("roomNoise")),
-      price: Number(f.get("price")),
-      size: Number(f.get("size")),
-      capacity: Number(f.get("capacity")),
-      internet: Number(f.get("internet")),
-      cleaning: Number(f.get("cleaning")),
-      electricity:
-        f.get("electricity") === "" ? null : Number(f.get("electricity")),
-      water: Number(f.get("water")),
-      parking: Number(f.get("parking")),
-      pets: f.getAll("allowedPets").length > 0,
-      amenities: f.getAll("amenities").map(String),
-      status,
-      owner: "Bạn",
-      updated: "2026-10-19",
-      demo: true,
-      kind: String(f.get("kind") ?? "Phòng trọ"),
-      leaseMonths: Number(f.get("leaseMonths") ?? 6),
-      rules: String(f.get("rules") ?? "Giữ yên tĩnh sau 22h."),
-    };
-    update((s) => ({
-      ...s,
-      listings: existing
-        ? s.listings.map((r) => (r.id === existing.id ? listing : r))
-        : [...s.listings, listing],
-      logs: [
-        ...s.logs,
-        `${status === "draft" ? "Lưu nháp" : "Gửi duyệt"}: ${listing.title}`,
-      ],
-    }));
-    setSubmitted(true);
-    notify(
-      status === "draft"
-        ? "Đã lưu bản nháp demo."
-        : "Đã gửi tin vào hàng đợi duyệt demo.",
-    );
-  }
-  if (submitted)
-    return (
-      <main className="container narrow section">
-        <Empty
-          title="Tin phòng đã được lưu."
-          description="Bạn có thể xem trạng thái tại trang quản lý. Tin chờ duyệt chỉ công khai sau khi được chấp thuận trong demo."
-          action={
-            <Link className="btn primary" href="/quan-ly-tin">
-              Về quản lý tin
-            </Link>
-          }
-        />
-      </main>
-    );
-  return (
-    <main className="container narrow section">
-      <PageTitle
-        title={existing ? "Sửa tin phòng" : "Đăng tin phòng"}
-        description="Càng rõ thông tin, người thuê càng dễ tìm thấy nơi phù hợp."
-      />
-      <form
-        className="panel"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const submitter = (e.nativeEvent as SubmitEvent)
-            .submitter as HTMLButtonElement;
-          save(
-            e.currentTarget,
-            submitter?.value === "draft" ? "draft" : "pending",
-          );
-        }}
-      >
-        <h2>Thông tin căn phòng</h2>
-        <label>
-          Tiêu đề
-          <input
-            name="title"
-            required
-            minLength={10}
-            maxLength={100}
-            defaultValue={existing?.title}
-            placeholder="Ví dụ: Phòng sáng, có ban công gần UIT"
-          />
-        </label>
-        <label>
-          Khu vực phục vụ
-          <select name="area" defaultValue={existing?.area}>
-            {areas.map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Địa chỉ mô tả mẫu
-          <input
-            name="address"
-            required
-            defaultValue={existing?.address}
-            placeholder="Dùng địa chỉ mẫu, không nhập thông tin riêng tư"
-          />
-        </label>
-        <div className="form-grid">
-          <label>
-            Giá phòng / tháng (VNĐ)
-            <input
-              type="number"
-              name="price"
-              required
-              min="100000"
-              step="10000"
-              defaultValue={existing?.price ?? 3000000}
-            />
-          </label>
-          <label>
-            Diện tích (m²)
-            <input
-              type="number"
-              name="size"
-              required
-              min="5"
-              max="500"
-              defaultValue={existing?.size ?? 25}
-            />
-          </label>
-          <label>
-            Số người tối đa
-            <input
-              type="number"
-              name="capacity"
-              required
-              min="1"
-              max="10"
-              defaultValue={existing?.capacity ?? 2}
-            />
-          </label>
-        </div>
-        <hr />
-        <div className="form-grid">
-          <label>
-            Loại phòng
-            <select name="kind" defaultValue={existing?.kind ?? "Phòng trọ"}>
-              {["Phòng trọ", "Studio", "Ở ghép"].map((v) => (
-                <option key={v}>{v}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Thời hạn tối thiểu
-            <select
-              name="leaseMonths"
-              defaultValue={existing?.leaseMonths ?? 6}
-            >
-              {[3, 6, 10, 12].map((n) => (
-                <option value={n} key={n}>
-                  {n} tháng
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <label>
-          Nội quy
-          <textarea
-            name="rules"
-            defaultValue={
-              existing?.rules ??
-              "Giữ yên tĩnh sau 22h. Khách ở lại cần thống nhất trước."
-            }
-          />
-        </label>
-        <h2>Chi phí và tiền cọc</h2>
-        <p className="muted">
-          Chọn riêng trạng thái từng khoản. Chưa khai báo không được coi là miễn
-          phí. Các khoản phụ thu là mức ước tính theo tháng; chuyển nhượng là
-          khoản một lần.
-        </p>
-        <div className="form-grid">
-          {feeKeys.map((k) => (
-            <div key={k}>
-              <label>
-                {feeLabels[k]} — trạng thái
-                <select
-                  aria-label={feeLabels[k] + " — trạng thái"}
-                  value={fees[k]!.status}
-                  onChange={(e) =>
-                    setFees({
-                      ...fees,
-                      [k]: {
-                        ...fees[k]!,
-                        status: e.target.value as Fee["status"],
-                      },
-                    })
-                  }
-                >
-                  {Object.entries(feeStatusLabels).map(([v, t]) => (
-                    <option key={v} value={v}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                {feeLabels[k]}
-                <input
-                  type="number"
-                  name={k}
-                  min="1"
-                  required={fees[k]!.status === "charged"}
-                  disabled={fees[k]!.status !== "charged"}
-                  defaultValue={fees[k]!.amount ?? ""}
-                />
-              </label>
-            </div>
-          ))}
-        </div>
-        <label>
-          Số tháng cọc
-          <input
-            type="number"
-            name="depositMonths"
-            min="0"
-            max="12"
-            required
-            defaultValue={existing?.depositMonths ?? 1}
-          />
-        </label>
-        <div className="form-grid">
-          <label>
-            Tầng
-            <input
-              type="number"
-              name="floor"
-              min="0"
-              max="30"
-              defaultValue={existing?.floor ?? 0}
-            />
-          </label>
-          <label>
-            View
-            <select name="view" defaultValue={existing?.view ?? "Cửa sổ"}>
-              {["Ban công", "Cửa sổ", "Trong hẻm", "Nội khu"].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Mức ồn phòng (1–4)
-            <input
-              type="number"
-              min="1"
-              max="4"
-              name="roomNoise"
-              defaultValue={existing?.roomNoise ?? 2}
-            />
-          </label>
-        </div>
-        <label className="check-label">
-          <input
-            type="checkbox"
-            name="elevator"
-            defaultChecked={existing?.elevator}
-          />
-          Có thang máy
-        </label>
-        <fieldset>
-          <legend>Loại thú cưng được phép</legend>
-          {[
-            ["cat", "Mèo"],
-            ["dog", "Chó"],
-          ].map(([v, t]) => (
-            <label className="check-label" key={v}>
-              <input
-                type="checkbox"
-                name="allowedPets"
-                value={v}
-                defaultChecked={existing?.allowedPets?.includes(
-                  v as "cat" | "dog",
-                )}
-              />
-              {t}
-            </label>
-          ))}
-        </fieldset>
-        <div className="amenity-checks">
-          {[
-            "Máy lạnh",
-            "WC riêng",
-            "Ban công",
-            "Bếp riêng",
-            "Nội thất",
-            "Chỗ để xe",
-            "Cửa sổ",
-          ].map((a) => (
-            <label className="check-label" key={a}>
-              <input
-                name="amenities"
-                value={a}
-                type="checkbox"
-                defaultChecked={existing?.amenities.includes(a)}
-              />
-              {a}
-            </label>
-          ))}
-        </div>
-        <hr />
-        <h2>Ảnh minh họa</h2>
-        <p className="muted">
-          Chọn ảnh mẫu có sẵn cho demo; chưa tải file lên hệ thống.
-        </p>
-        <div className="photo-options">
-          {roomImages.map((img) => (
-            <button
-              className={image === img ? "selected" : ""}
-              type="button"
-              key={img}
-              aria-label={"Chọn ảnh mẫu " + (roomImages.indexOf(img) + 1)}
-              aria-pressed={image === img}
-              onClick={() => setImage(img)}
-            >
-              <img src={img} alt="Ảnh phòng mẫu" />
-            </button>
-          ))}
-        </div>
-        <p className="info-note">
-          Mọi chỉnh sửa trong demo sẽ tạo lại yêu cầu duyệt. Bản frontend chưa
-          lưu lịch sử revision độc lập hoặc chạy kiểm tra ảnh/AI.
-        </p>
-        <div className="form-actions">
-          <Link className="btn outline" href="/quan-ly-tin">
-            Quay lại
-          </Link>
-          <button
-            className="btn outline"
-            name="action"
-            value="draft"
-            formNoValidate
-          >
-            Lưu nháp
-          </button>
-          <button className="btn primary" name="action" value="pending">
-            Gửi duyệt <Icon name="arrow" size={17} />
-          </button>
-        </div>
-      </form>
-    </main>
-  );
-}
+export { ListingWizard as ListingFormScreen } from "./listing-wizard";

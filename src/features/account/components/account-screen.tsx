@@ -68,6 +68,8 @@ export function AccountScreen() {
           </form>
           <div className="account-links">
             {[
+              ["/noi-o", "Nơi ở của tôi", "home"],
+              ["/thong-bao", "Thông báo", "bell"],
               ["/yeu-thich", `Tin đã lưu (${data.saved.length})`, "heart"],
               ["/roommatch/ho-so", "Hồ sơ RoomMatch", "users"],
               ["/quan-ly-tin", "Quản lý tin phòng", "home"],

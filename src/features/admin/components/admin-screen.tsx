@@ -1,4 +1,8 @@
 "use client";
+import { DestinationAdmin } from "@/features/housing/components/destination-admin";
+import { HousingAdmin } from "@/features/housing/components/housing-admin";
+import { DemoActors } from "@/features/housing/components/housing-screen";
+import { publishListing, actorId, ADMIN } from "@/services/housing";
 import { presentListing } from "@/features/listings/lib/presentation";
 import { setListingReportDecision } from "@/services/listing-trust";
 import { useState } from "react";
@@ -8,7 +12,7 @@ import { Icon } from "@/shared/components/icon";
 import { statusLabels, canSubmit } from "@/features/listings/lib/status";
 import type { ListingStatus } from "@/shared/lib/models";
 export function AdminScreen() {
-  const { data, update, notify } = useDemo();
+  const { data, update, notify, command } = useDemo();
   const [entered, setEntered] = useState(false);
   const [tab, setTab] = useState("listings");
   const [decision, setDecision] = useState<{
@@ -32,7 +36,12 @@ export function AdminScreen() {
             demo. Chế độ này không cấp quyền quản trị thật và không phải cơ chế
             phân quyền sản phẩm.
           </p>
-          <button className="btn primary" onClick={() => setEntered(true)}>
+          <DemoActors />
+          <button
+            className="btn primary"
+            disabled={data.status !== "active" || actorId(data) !== ADMIN}
+            onClick={() => setEntered(true)}
+          >
             Mở bảng vận hành demo <Icon name="arrow" size={17} />
           </button>
         </div>
@@ -41,9 +50,21 @@ export function AdminScreen() {
   const pending = data.listings.filter((r) =>
     ["pending", "changes", "rejected"].includes(r.status),
   );
-  function commit() {
+  async function commit() {
     if (!decision || !reason.trim()) return;
+    if (data.status !== "active" || actorId(data) !== ADMIN) {
+      notify("Cần phía Admin mẫu đã đăng nhập để xử lý.");
+      return;
+    }
     const d = decision;
+    if (d.type === "listing" && d.action === "published") {
+      const ok = await command((s) => publishListing(s, d.id, reason));
+      if (ok) {
+        setDecision(null);
+        setReason("");
+      }
+      return;
+    }
     const room = data.listings.find((r) => r.id === d.id);
     if (
       d.type === "listing" &&
@@ -173,6 +194,8 @@ export function AdminScreen() {
           </div>
         ))}
       </div>
+      <HousingAdmin />
+      <DestinationAdmin />
       <div className="tabs">
         {[
           ["listings", "Duyệt tin phòng"],

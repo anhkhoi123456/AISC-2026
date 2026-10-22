@@ -186,7 +186,7 @@ test("legacy migration keeps messages and original raw backup, even when backup 
         () => JSON.parse(localStorage.getItem("antro-demo-v2")!).version,
       ),
     )
-    .toBe(3);
+    .toBe(4);
   const restored = await page.evaluate(
     () => JSON.parse(localStorage.getItem("antro-demo-v2")!).data,
   );

@@ -72,7 +72,7 @@ test("hard filters check both directions, ordered areas, commute, intervals and 
   s.profile.maxDepositMonths = 2;
   s.profile.scenario = "Đã có phòng";
   s.profile.roomId = "phong-ban-cong";
-  assert.ok(!getDeck(s, "discover").some((x) => x.person.id === "an"));
+  assert.throws(() => getDeck(s, "discover"), /quyền tuyển roommate/); // Linking a published room alone is no longer proof of occupancy or permission.
   s.listings[0].status = "hidden";
   assert.throws(() => getDeck(s, "discover"));
 });

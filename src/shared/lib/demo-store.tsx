@@ -14,6 +14,7 @@ import { createInitialState, demoDataService } from "@/services/demo-data";
 type Store = {
   data: DemoState;
   ready: boolean;
+  busy: boolean;
   update: (fn: (s: DemoState) => DemoState) => void;
   notify: (s: string) => void;
   toast: string;
@@ -26,6 +27,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState(createInitialState);
   const current = useRef(data);
   const [ready, setReady] = useState(false);
+  const [pendingCommands, setPendingCommands] = useState(0);
   const [toast, setToast] = useState("");
   const [storageError, setStorageError] = useState("");
   useEffect(() => {
@@ -63,8 +65,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setData(next);
   }, []);
   const command = async (fn: (s: DemoState) => DemoState) => {
-    await delay();
+    setPendingCommands((n) => n + 1);
     try {
+      await delay();
       update(fn);
       return true;
     } catch (error) {
@@ -74,6 +77,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           : "Không hoàn tất được thao tác demo.",
       );
       return false;
+    } finally {
+      setPendingCommands((n) => n - 1);
     }
   };
   return (
@@ -81,6 +86,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       value={{
         data,
         ready,
+        busy: pendingCommands > 0,
         update,
         command,
         notify: setToast,

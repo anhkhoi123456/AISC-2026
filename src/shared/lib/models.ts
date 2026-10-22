@@ -1,3 +1,4 @@
+import type { HousingState } from "@/features/housing/models";
 export type Status =
   "guest" | "pending" | "active" | "review" | "rejected" | "blocked";
 export type ListingStatus =
@@ -7,7 +8,8 @@ export type ListingStatus =
   | "changes"
   | "rejected"
   | "hidden"
-  | "rented";
+  | "rented"
+  | "closed";
 export type FeeStatus = "charged" | "included" | "none" | "unknown";
 export type FeeKey =
   | "internet"
@@ -19,8 +21,13 @@ export type FeeKey =
   | "extraGuest"
   | "laundry"
   | "transfer";
-export type Fee = { status: FeeStatus; amount: number | null };
+export type Fee = {
+  status: FeeStatus;
+  amount: number | null;
+  includedIn?: string;
+};
 export type Identity = {
+  checkedAt?: string;
   name: string;
   gender: string;
   birthYear: number;
@@ -29,6 +36,20 @@ export type Identity = {
   verified: boolean;
 };
 export type Listing = {
+  posterCapacity?: string;
+  roomId?: string;
+  ownerId?: string;
+  locationConfirmed?: boolean;
+  location?: { lat: number; lng: number };
+  verification?: {
+    contact: boolean;
+    identity: boolean;
+    rentalRight: boolean;
+    checkedAt: string;
+  };
+  advanceMonths?: number;
+  refundTerms?: string;
+  conditionalFees?: string;
   verifiedReportIds?: string[];
   feeStates?: Partial<Record<FeeKey, Fee>>;
   depositMonths?: number;
@@ -161,6 +182,7 @@ export type Conversation = {
 
 export type Role = "guest" | "tenant" | "landlord" | "admin";
 export type DemoState = {
+  housing: HousingState;
   identity?: Identity;
   lastSwipe?: {
     id: string;

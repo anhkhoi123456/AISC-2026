@@ -1,4 +1,5 @@
 "use client";
+import { occupancy, physicalId } from "@/services/housing";
 import { presentListing } from "../lib/presentation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,10 +11,12 @@ export function RoomCard({
   room: storedRoom,
   people = 2,
   reason,
+  preview = false,
 }: {
   room: Listing;
   people?: number;
   reason?: string;
+  preview?: boolean;
 }) {
   const room = presentListing(storedRoom);
   const { data, update, notify } = useDemo();
@@ -23,11 +26,17 @@ export function RoomCard({
   return (
     <article className="room-card">
       <div className="room-photo">
-        <Link href={`/phong/${room.id}`} tabIndex={-1}>
-          <img src={room.image} alt={room.title} />
-        </Link>
+        {preview ? (
+          <img src={room.image} alt="Ảnh minh họa xem trước" />
+        ) : (
+          <Link href={`/phong/${room.id}`} tabIndex={-1}>
+            <img src={room.image} alt={room.title} />
+          </Link>
+        )}
 
         <button
+          type="button"
+          disabled={preview}
           aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}
           aria-pressed={saved}
           className={`save-btn ${saved ? "saved" : ""}`}
@@ -56,8 +65,18 @@ export function RoomCard({
           {room.area}
         </p>
         <h3>
-          <Link href={`/phong/${room.id}`}>{room.title}</Link>
+          {preview ? (
+            room.title
+          ) : (
+            <Link href={`/phong/${room.id}`}>{room.title}</Link>
+          )}
         </h3>
+        {!preview && (
+          <p className="room-data-note">
+            Còn {occupancy(data, physicalId(room)).available}/
+            {occupancy(data, physicalId(room)).capacity} chỗ theo ghi nhận demo
+          </p>
+        )}
         <div className="room-specs">
           <span>
             <Icon name="area" size={15} />
