@@ -1,7 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "**/*.spec.ts",
+  // Role switching and moderation are deliberately development-only.
+  testMatch:
+    process.env.ANTRO_INTERNAL_TOOLS === "1"
+      ? "**/*.spec.ts"
+      : ["**/ui-ux.spec.ts", "**/hosting.spec.ts"],
   fullyParallel: false,
   workers: 1,
   timeout: 120000,

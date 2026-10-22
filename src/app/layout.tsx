@@ -4,10 +4,11 @@ import "./globals.css";
 import "./design.css";
 import { themeBootstrap } from "@/shared/lib/theme";
 export const metadata: Metadata = {
+  icons: { icon: { url: "/images/logo.jpg", type: "image/jpeg" } },
   robots: { index: false, follow: false },
-  title: "AnTro — Tìm nơi ở, gặp người hợp",
+  title: "AnTro — Tìm phòng gần trường",
   description:
-    "Tìm phòng và bạn ở ghép quanh Làng Đại học Quốc gia. Bản demo tìm phòng, so sánh chi phí và kết nối ở ghép.",
+    "Tìm phòng và bạn ở ghép quanh Làng Đại học Quốc gia. Xem chi phí, điều kiện thuê và lưu những phòng phù hợp.",
 };
 export default function RootLayout({
   children,

@@ -1,17 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/shared/components/icon";
 import { suggestPlaces, parseQuery } from "@/features/search/lib/query";
 import type { Place } from "@/features/search/mocks/places";
+import { useDemo } from "@/shared/lib/demo-store";
+import { destinationCatalog } from "@/services/destinations";
 export function HeroSearch() {
+  const { data } = useDemo();
+  const catalog = useMemo(() => destinationCatalog(data), [data]);
   const router = useRouter();
   const [query, setQuery] = useState(""),
     [budget, setBudget] = useState(""),
     [place, setPlace] = useState<Place | null>(null),
     [open, setOpen] = useState(false),
     [active, setActive] = useState(-1);
-  const suggestions = suggestPlaces(query);
+  const suggestions = suggestPlaces(query, catalog);
   function choose(p: Place) {
     setPlace(p);
     setQuery(p.name);
@@ -20,13 +24,23 @@ export function HeroSearch() {
   }
   function search() {
     const p = new URLSearchParams();
-    const parsed = parseQuery(query);
+    const parsed = parseQuery(query, catalog);
     if (place) {
       p.set("place", place.id);
-      p.set("area", place.area);
+      p.set(
+        "destinations",
+        JSON.stringify([{ placeId: place.id, radiusKm: 2, mode: "must" }]),
+      );
     } else
       for (const [key, value] of Object.entries(parsed.patch))
-        p.set(key, value === true ? "1" : String(value));
+        p.set(
+          key,
+          key === "destinations"
+            ? JSON.stringify(value)
+            : value === true
+              ? "1"
+              : String(value),
+        );
     if (query.trim() && !place && !Object.keys(parsed.patch).length)
       p.set("q", query.trim());
     if (query.trim()) p.set("q", query.trim());
@@ -105,7 +119,7 @@ export function HeroSearch() {
                     <Icon name="pin" size={17} />
                     <span>
                       {p.name}
-                      <small>{p.kind} · Địa điểm mẫu</small>
+                      <small>{p.kind}</small>
                     </span>
                   </button>
                 </li>
@@ -132,7 +146,7 @@ export function HeroSearch() {
         </button>
       </form>
       <div className="quick-places">
-        <span>Thử tìm:</span>
+        <span>Tìm nhanh:</span>
         {[
           ["Gần trường", "Trường", "home"],
           ["Gần metro", "Metro", "train"],

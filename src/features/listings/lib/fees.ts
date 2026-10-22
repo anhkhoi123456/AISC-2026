@@ -39,6 +39,7 @@ export function fee(room: Listing, key: FeeKey): Fee {
 export function feeAmount(room: Listing, key: FeeKey) {
   const f = fee(room, key);
   return f.status === "unknown" ||
+    (f.status === "included" && !f.includedIn?.trim()) ||
     (f.status === "charged" && (f.amount === null || f.amount <= 0))
     ? null
     : f.status === "charged"

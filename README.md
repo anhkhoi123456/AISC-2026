@@ -1,102 +1,76 @@
-# AnTro — prototype frontend
+# AnTro 3.0 — frontend demo
 
-Website tiếng Việt tìm phòng và bạn ở ghép quanh Làng Đại học Quốc gia. Next.js App Router + React + TypeScript + Tailwind CSS + Lucide Icons. Giữ framework của repository; React Router (`HashRouter`) điều hướng hai bước trong công cụ đọc hợp đồng bằng fragment `#/ket-qua`, hỗ trợ Back và tải lại kết quả; Next.js vẫn quản lý đường dẫn trang.
+Website tìm phòng, tìm bạn ở ghép và theo dõi lượt thuê quanh Làng Đại học. **Next.js 16 App Router, React 19, TypeScript 6, Tailwind/CSS, Lucide**. Giữ codebase hiện tại, không thêm dependency. Next.js quản lý route; công cụ đọc hợp đồng cũ dùng fragment cho hai bước nội bộ.
 
-Hướng dẫn host riêng cho team, cấu hình Vercel và phần cần làm trên tài khoản: [docs/HOSTING.md](docs/HOSTING.md). Chưa có deployment được tạo.
+Nguồn chính: [đặc tả hợp nhất 22/10/2026](docs/requirements/ANTRO-3.0.md). [Checklist mục 25 và kết quả nghiệm thu](docs/ANTRO-3-CHECKLIST.md). Tài liệu rà soát 2.x trong `docs/PROTOTYPE-REVIEW.md` và `docs/CONTENT-REVIEW.md` là lịch sử, không thay quy tắc 3.0.
 
-## Cài và chạy
+## Chạy
 
-Yêu cầu Node.js 24.x và npm (có `.nvmrc`). Không cần API key hoặc dịch vụ backend.
+Node.js **24.x**, npm. Không cần `.env`, API key, database hoặc dịch vụ trả phí.
 
 ```sh
-cd "/Users/giabinhne/Documents/AISC/AnTro"
+cd /Users/giabinhne/Documents/AISC/AnTro
 npm ci
 npm run dev
 ```
 
-Mở http://localhost:3000. Dừng bằng Ctrl+C. Bản production:
+Mở http://localhost:3000. Bản production cục bộ:
 
 ```sh
 npm run build
 npm start
 ```
 
-Webpack được chọn cho dev/build vì Turbopack không bind được tiến trình xử lý CSS trong môi trường sandbox thử nghiệm. TypeScript 6 được dùng để tương thích bộ lint.
+Có thể dùng cổng riêng: `npm start -- --hostname 127.0.0.1 --port 3100`. Không có deploy mới. Hướng dẫn hosting riêng cho team: [HOSTING.md](docs/HOSTING.md), cần cấu hình bảo vệ truy cập trên tài khoản hosting trước khi chia sẻ.
 
-## Chuyển vai trò và xác minh
+`npm run dev` dùng Turbopack để giảm thời gian biên dịch khi chuyển trang. Nếu cần kiểm tra tương thích Webpack, dùng `npm run dev:webpack`. Sau khi đổi bundler cần dừng server cũ bằng Ctrl+C rồi chạy lại; không chạy hai dev server trong cùng thư mục. Lần đầu vào trang ở chế độ dev vẫn có thể phải biên dịch/tải JavaScript. Để trình diễn ổn định, dùng `npm run build` rồi `npm start`.
 
-Nút **Công cụ demo** trên header chọn vai trò và dẫn tới đăng nhập → OTP → danh tính mẫu, không chuyển thẳng sang đã xác minh. Danh tính mẫu là chỉ đọc trong RoomMatch. Admin và mô phỏng consent đối phương nằm trong công cụ này; không cấp quyền thật.
+Mock service mặc định không thêm độ trễ mạng giả; luồng đọc điều khoản vẫn có khoảng chờ minh họa được chỉ định riêng.
 
-Trang `/dang-nhap` có form email và mật khẩu mẫu (tối thiểu 6 ký tự), hiện/ẩn mật khẩu, chuyển đăng ký và hướng dẫn quên mật khẩu mô phỏng. Vùng **Trải nghiệm demo** thu gọn cung cấp email **demo@antro.vn**, mật khẩu mẫu **Antro123!**, tên hiển thị và lối vào nhanh giữ luồng cũ; OTP **123456**. Mật khẩu nhập không được lưu hoặc gửi ra ngoài. Chọn kết quả eKYC giả lập; không mở camera hoặc nhận CCCD. `/admin` có bước xác nhận vào không gian vận hành demo. Tất cả quyền là mô phỏng frontend, không dùng để bảo vệ dữ liệu production.
+## Giới hạn cần nói rõ
 
-## Giao diện
+Đây là **một trình duyệt dùng mock service + localStorage**, không phải nhiều tài khoản trao đổi qua server. Mọi ảnh, tọa độ, danh tính, bằng chứng, hợp đồng và review ban đầu đều là mẫu. Không nhận tiền, giữ cọc, ký điện tử thật, gọi ngân hàng, OTP/eKYC/OAuth thật hoặc AI trả phí. Che liên hệ và kiểm tra quyền ở frontend không tạo bảo mật backend.
 
-Trang chủ đưa ô tìm địa điểm, ngân sách và nút tìm ngay trong hero; gợi ý trường, metro và tiện ích hỗ trợ chọn bằng bàn phím hoặc chạm. Trang đăng nhập chia hai vùng trên desktop, ưu tiên form trên mobile. Ảnh phòng ngủ mới chỉ minh họa không gian sống.
+Trong development, sau khi hoàn tất đăng nhập, mở **Công cụ nội bộ → Đổi người thao tác mẫu** để diễn phản hồi Người thuê / Người đăng / Admin trên cùng bộ dữ liệu. Người đăng mẫu quản lý danh mục phòng được gán cho `owner-demo`; tài khoản người thuê vẫn có thể đăng tin riêng của mình, quyền sửa gắn mã người quản lý từng phòng. Không dùng việc đổi vai trò làm bằng chứng phân quyền thật.
 
-Nút giao diện trên header có **Sáng / Tối / Theo hệ thống**, lưu riêng vào `localStorage['antro-theme']`. Script trong head áp dụng lựa chọn trước khi hiển thị nội dung; chế độ hệ thống theo thay đổi của thiết bị. Các màu dùng token chung cho tìm phòng, RoomMatch, quản lý, chat và modal; ảnh giữ nguyên màu.
+Đăng nhập cục bộ: nhập email và mật khẩu tối thiểu 6 ký tự (có thể dùng `demo@antro.vn` / `Antro123!`, không dùng mật khẩu thật) → mã xác nhận **123456** → **Xác nhận và tiếp tục** → **Xem kết quả** → **Tiếp tục**. Đây vẫn là hồ sơ mẫu, không có dịch vụ xác thực thật.
 
-## Các trang
+Công cụ đổi vai trò/reset chỉ có ở **development**, trong biểu tượng Công cụ nội bộ trên header; các màn hình tác vụ không chèn panel đổi phía. Production không có công cụ đó và không render Admin. Xem [ghi nhận UI/UX và kiểm tra theo môi trường](docs/UI-UX-REVIEW.md).
+
+## Các trang và hành vi
 
 | URL | Nội dung |
-| --- | --- |
-| `/` | Trang chủ, tìm nhanh, lối vào người thuê/chủ trọ |
-| `/tim-phong` | Autocomplete địa điểm, parser quy tắc, bộ lọc URL, nhóm đạt/cần cân nhắc |
-| `/phong/[id]` | Ảnh, nội quy, phí theo đơn vị, cọc, Trust Score và khoảng giá mẫu |
-| `/dang-nhap`, `/xac-minh` | Tài khoản và xác minh mô phỏng |
-| `/roommatch/ho-so` | Hồ sơ nhiều bước, tự lưu bản nháp, mức quan trọng từng tiêu chí |
-| `/roommatch` | Thẻ, điểm hai chiều, quan tâm/bỏ qua, Match, chặn và báo cáo |
-| `/tin-nhan` | Lịch sử chat local, gợi ý mở đầu, kết thúc/chặn |
-| `/quan-ly-tin`, `/dang-tin` | Dashboard, nháp/gửi duyệt, chỉnh sửa và đánh dấu đã thuê |
-| `/admin` | Duyệt/từ chối, báo cáo, ẩn/khôi phục và nhật ký |
-| `/tai-khoan`, `/yeu-thich` | Tài khoản, tin đã lưu và reset |
-| `/hop-dong` | Dán/chọn văn bản, rà soát từ khóa, đối chiếu đúng đoạn |
+|---|---|
+| `/`, `/tim-phong` | Tìm theo tọa độ mẫu, nhiều điểm đến/bán kính; điều kiện bắt buộc áp đồng thời; nhóm gần phù hợp giải thích riêng |
+| `/phong/[id]` | Chi phí dùng chung calculator, trạng thái phí, tiền ban đầu, xác minh theo loại, yêu cầu thuê, review và lịch sử căn phòng |
+| `/roommatch/ho-so`, `/roommatch` | Hồ sơ nhiều bước, lọc hai chiều, trung bình nhân, lý do cùng nguồn tính, quan tâm/bỏ qua/vuốt/phím/hoàn tác |
+| `/tin-nhan` | Chat tin phòng hoặc mutual Match; consent liên hệ hai phía, cảnh báo theo ngữ cảnh, chặn/kết thúc |
+| `/noi-o` | Thỏa thuận thuê, hai phía bàn giao, hồ sơ/phiên bản hợp đồng mẫu, bảng phí kỳ thuê, khai trả/nhận, cọc, đề xuất giá, rời phòng và review |
+| `/thong-bao` | Thông báo theo phía có liên quan; đã đọc không thành đồng ý |
+| `/dang-tin`, `/quan-ly-tin` | Wizard 4 bước có nháp, phí, xem trước, quản lý quyền tuyển roommate/chỗ, đóng/ẩn/đăng lại |
+| `/admin` | Duyệt tin đủ điều kiện mẫu; báo cáo, bất đồng lượt ở/cọc, review, điểm; lý do và log |
+| `/tai-khoan`, `/yeu-thich` | Hồ sơ, tin lưu, xóa dữ liệu demo cục bộ có xác nhận |
+| `/hop-dong` | Công cụ phụ dò từ khóa, không phải tư vấn hoặc kết luận pháp lý |
 
-## Kịch bản trình diễn 5–7 phút
+**Địa điểm:** Haversine đường chim bay từ tọa độ giả lập của phòng và điểm đến. Không có tọa độ thì chưa tính được, không gán 0 km; không suy ra phút đi đường. Trường/nơi làm việc trong RoomMatch độc lập với khu vực muốn thuê. Các thời gian di chuyển RoomMatch là khai báo mẫu riêng, không tính từ Haversine.
 
-1. **Tìm phòng (1 phút):** vào `/tim-phong`, gõ `UIT`, nhấn mũi tên xuống và Enter; cũng có thể chạm gợi ý. Thử `trường`, `metro`, `siêu thị`, `chợ`, `bệnh viện` hoặc không dấu. Câu `Gần UIT, dưới 3 triệu, cho nuôi mèo, thuê 10 tháng` tạo 4 chip. Xóa/sửa chip, đổi bộ lọc rồi refresh/Back để kiểm tra URL.
-2. **Chi phí (1 phút):** mở phòng, đổi số người và kWh/phòng. Nước theo người không bị chia lần nữa; cọc ở khoản ban đầu. Phòng gần KTX thiếu giá điện nên không được xác nhận đạt ngân sách tổng. Mở giải thích Trust Score; giá tham khảo là số giả lập, có cụm chưa đủ mẫu.
-3. **RoomMatch (2 phút):** chọn vai trò Người thuê hoặc đăng nhập bằng OTP mẫu. Tạo hồ sơ mặc định nữ, gần UIT, ngân sách 1–3 triệu, vào tháng 11/2026, thời hạn 10 tháng. Bản nháp tự giữ khi tải lại. Chọn mức quan trọng rồi bật hồ sơ. Thử bỏ qua bằng nút/vuốt/phím mũi tên rồi hoàn tác. Quan tâm Ngọc Linh (đã quan tâm bạn theo seed) để tạo Match; tiếp tục khám phá Thảo Vy để thử quan tâm một chiều, không mở chat. Gửi tin, refresh rồi kết thúc/chặn để thấy quyền gửi đóng.
-4. **Chủ trọ và vận hành (1 phút):** chọn Chủ trọ, tạo tin với ảnh sẵn có và bảng phí. Gửi duyệt chưa công khai. Chọn Admin, duyệt kèm lý do; tìm thấy tin mới. Thử báo cáo/ẩn tin và xem tin biến mất. Quyết định không đủ cơ sở sau rà soát có thể khôi phục trạng thái trước.
-5. **Hợp đồng (1 phút):** mở `/hop-dong`, chọn mẫu có điều khoản cần chú ý. Rà soát, bấm “Xem đúng đoạn văn bản” ở tăng phí/hoàn cọc/chấm dứt để đối chiếu đoạn được tô. Đây là dò từ khóa, không phải kết luận pháp lý.
+**Phí:** Có phí / Đã gồm (nêu ở đâu) / Không thu / Chưa rõ. Internet/vệ sinh/quản lý theo phòng được chia người; nước theo người; điện theo kWh/phòng; xe theo số xe cá nhân. Phụ thu khách và chuyển nhượng là khoản có điều kiện, không cộng vào tháng thường. Trả trước tính cả tháng đầu, không cộng trùng. Ví dụ chuẩn 3 triệu, 2 người, 120 kWh, 1 xe/người: **1.940.000đ/người/tháng**, cọc **1.500.000đ/người**, ban đầu **3.440.000đ/người**. Tin đầu seed giá 3,2 triệu nên tổng tương ứng là **2.040.000đ**.
 
-## Dữ liệu gọn và lưu trạng thái
+**Lượt ở:** Match/quan tâm/chat không tạo thuê hoặc giảm chỗ. Mỗi tài khoản có một bản ghi riêng. Chỉ sau hai bên bàn giao hoặc Admin đối chiếu bằng chứng mẫu hợp lệ mới có căn cứ cư trú. Số người từ lượt đang ở + khách ngoài hệ thống được khai báo; khách ngoài không tự có quyền review. Hết chỗ ngừng tiếp nhận; kết thúc giữ lịch sử và cần chủ động mở đợt tuyển mới.
 
-Theo cập nhật mới nhất của chủ dự án, giữ **3 phòng công khai + 1 tin chờ duyệt và 3 hồ sơ RoomMatch**, thay cho yêu cầu 18/10 ban đầu. Có trường hợp đủ phí, thiếu giá điện, khác nhịp sống, quan tâm một/hai chiều và báo cáo mẫu. Có thể tạo thêm phòng qua giao diện; không cần sinh thêm seed.
+**Trust 3.0:** M là mức rõ thông tin/chi phí/điều kiện hiện tại. R = 25 × (sao trung bình − 1), chỉ từ review hợp lệ chưa bị ẩn. H khởi điểm giả định 70, bàn giao được ghi nhận +2/lượt tối đa +20, mỗi report đã xác nhận −10; đính chính Admin có căn cứ được lưu riêng. T = làm tròn(0,4 M + 0,4 R + 0,2 H), chỉ có tổng khi đủ ít nhất ba tài khoản/lượt ở khác nhau. Không có mẫu thì **Chưa đủ dữ liệu**, không gán kém. Công thức cũ 30/25/20/15/10 không dùng để hiển thị Trust 3.0; helper cũ còn để kiểm thử tính tương thích lịch sử. User Trust cũ chỉ là thông tin mẫu, không dùng để chặn cơ hội thuê hoặc cấp quyền review.
 
-`localStorage['antro-demo-v2']` giữ nguyên key nhưng lưu envelope `{ version: 3, data: ... }`. Có migration v2 → v3, thông báo và bản sao gốc `antro-demo-before-v3`; không âm thầm xóa dữ liệu cũ. Kiểm tra schema cả dữ liệu lồng nhau trước khi nạp; dữ liệu hỏng/khác version được khôi phục về seed kèm thông báo. Bộ nhớ bị chặn hoặc đầy sẽ có cảnh báo, vẫn dùng được trong phiên. Phiên bản v1 cũ không tự nạp; khóa cũ được giữ nguyên. Không lưu File/Blob, chỉ tham chiếu ảnh local.
+## Dữ liệu và lưu trữ
 
-**Reset:** mở Công cụ demo → Đặt lại dữ liệu demo → Xác nhận đặt lại. Hoặc dùng nút xác nhận ở `/tai-khoan`. Reset xóa tiến trình hiện tại, không tác động tệp ảnh hoặc mã nguồn.
+Giữ key `antro-demo-v2`, envelope hiện là **version 4**. Migration v2/v3 giữ tin, hồ sơ, chat và lượt quan tâm, thêm mô hình căn phòng/đợt đăng; **không biến dữ liệu cũ thành lượt ở đã xác nhận**. Có thông báo và bản sao trước chuyển đổi `antro-demo-before-v4` (giữ backup v3 cũ). Chỗ/phòng dùng mã riêng, snapshot thuê không bị sửa bởi giá chào. Lượt ở, bill, review, quyết định và thông báo được lưu qua refresh. Dữ liệu housing hỏng được cô lập, giữ dữ liệu lõi và sao lưu nguyên bản; đầy/chặn bộ nhớ có cảnh báo, thay đổi còn trong phiên.
 
-## Cấu trúc và nơi thay khi nối backend
+Seed mới: 3 tin công khai, 1 chờ duyệt, 3 hồ sơ RoomMatch; phòng đầu có Khánh An đang ở mẫu và ba lượt lịch sử với ba review đủ điều kiện để trình diễn ngưỡng điểm. Phòng KTX thiếu điện và review, thể hiện đúng thông tin chưa đủ. Không cần tăng số mẫu. Bản dữ liệu cũ giữ nguyên, nên có thể chưa có lịch sử mẫu mới; muốn diễn seed mới, tải JSON hồ sơ lượt ở cần giữ (trong mục Hồ sơ và bàn giao) hoặc lưu bản sao localStorage trước rồi chủ động reset có xác nhận trong Công cụ nội bộ (development). Không tự reset.
 
-- `src/app`: route/layout mỏng, CSS thiết kế chung.
-- `src/features`: màn hình theo tính năng, mock phòng/người/địa điểm và bộ parser.
-- `src/shared/components`: UI chung, modal, Lucide, công cụ demo và Trust Score.
-- `src/shared/lib/models.ts`: kiểu dữ liệu dùng chung.
-- `src/shared/lib/demo-store.tsx`: adapter React nhận dữ liệu/service và phát thay đổi; cần thay bằng cache/store kết nối API.
-- `src/services/demo-data.ts`: load local bất đồng bộ, schema version và persistence; thay bằng API/session thật.
-- `src/services/search.ts`: lọc bắt buộc và ưu tiên; `searchService.search` có độ trễ giả lập.
-- `src/services/roommatch.ts`: lọc hai chiều, chấm điểm, deck và giao dịch quan tâm; thay bằng backend để enforce ở server.
-- `src/services/messages.ts`: kiểm tra quyền gửi và mã chống trùng; thay bằng messaging API/WebSocket.
-- `src/services/trust.ts`: điểm/giá giả lập có thể giải thích; thay bằng dữ liệu đã được vận hành kiểm chứng.
-- `src/features/contract/services/reader.ts`: rà soát văn bản bằng quy tắc, không gửi ra ngoài.
+Màu **Sáng / Tối / Theo hệ thống** dùng key `antro-theme` riêng, áp dụng từ head tránh nháy sáng. Ảnh không đảo màu; [nguồn ảnh](public/images/SOURCES.md). Khi xóa dữ liệu trình duyệt có thể mất tiến trình; đây không phải sao lưu production.
 
-Các cập nhật form/quản lý tin/Admin dùng chung adapter trạng thái, phản ánh ngay giữa các route. Hành động tương tác RoomMatch/chat có độ trễ ngắn và kiểm tra trạng thái mới nhất; không tạo hai Match cho một cặp. Không đồng bộ giữa các trình duyệt hoặc người dùng thật.
+## Kịch bản 5–7 phút
 
-## Quyết định và giả định triển khai
-
-Đã đọc hai tài liệu Word v2.0, bản prototype 10 ngày và sơ đồ tech stack/luồng người dùng trong cuộc trò chuyện. **Chưa tìm thấy `Feature AISC.pdf` trong workspace**, nên không khẳng định đã đọc tệp đó.
-
-- Giữ Next.js thay vì tạo dự án Vite mới. Next.js quản lý URL trang; HashRouter chỉ quản lý bước trong công cụ hợp đồng.
-- Mặc định cùng giới theo danh tính mẫu, không bật ghép khác giới. Đây là giả định demo, không kiểm tra danh tính thật.
-- Khu vực, ngân sách, ngày và thời hạn là lọc cứng. Chọn tối đa 5 khu vực có thứ tự, thời gian di chuyển mẫu và khoảng thời hạn; trường/nơi làm việc độc lập. Hai người đã có phòng không ghép nhau. Người có phòng cần liên kết tin đang hiển thị và đủ thông tin chi phí.
-- Điểm `√(S(A→B) × S(B→A))`, trọng số theo đặc tả. Mức Quan trọng ×1,5; Bình thường ×1; Không quan tâm ×0; Bắt buộc kiểm tra hai chiều và không cộng lại vào điểm mềm. Tổng trọng số bằng 0 hiển thị chưa đủ tiêu chí chấm điểm. Ma trận giờ giấc và ngưỡng độ tương đồng là giả định demo cần hiệu chỉnh. Điểm không phải xác suất sống chung thành công.
-- Hồ sơ có nhóm phòng/chi phí và thói quen mở rộng; xem [docs/PROTOTYPE-REVIEW.md](docs/PROTOTYPE-REVIEW.md) để biết trường nào chấm điểm, điều kiện cứng và giả định chưa chốt.
-- Tìm quanh địa điểm bằng cụm, không dựng khoảng cách/thời gian di chuyển chính xác. Điều kiện ưu tiên chỉ xếp thứ tự; không âm thầm nới bắt buộc.
-- Điểm tin và khoảng giá chỉ minh họa. Không tuyên bố đã kiểm tra ảnh hoặc xác minh quyền cho thuê. Khoản phí cọc mẫu bằng một tháng tiền phòng.
-- Chưa triển khai API/database, OAuth, SMS/eKYC thật, AI thật, upload file, thanh toán, lịch tự động 7/14 ngày, revision bất biến, nhóm nhiều người, CI/CD hoặc hosting. Không cần API key.
-
-Đợt rà soát RoomMatch/chat/Trust và bảng lỗi trước sửa: [docs/PROTOTYPE-REVIEW.md](docs/PROTOTYPE-REVIEW.md).
+Xem [DEMO-3.0.md](docs/DEMO-3.0.md) để có đúng nút, dữ liệu nhập và nhánh bị chặn. Dùng seed mới trong profile trình duyệt thử nghiệm; không reset dữ liệu đang dùng của team để diễn.
 
 ## Kiểm tra
 
@@ -105,13 +79,13 @@ npm run lint
 npm run typecheck
 npm run test:unit
 npm run build
-npm start
-# Terminal khác, với server production đang chạy:
-npm run test:e2e
+npm start -- --hostname 127.0.0.1 --port 3100
+# Terminal khác:
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npm run test:e2e
+# Luồng đổi vai trò/Admin: chạy dev server rồi dùng:
+# ANTRO_INTERNAL_TOOLS=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:e2e
 ```
 
-Unit test kiểm tra đơn vị tiền, parser/alias, lọc bắt buộc/ưu tiên, chấm hai chiều, zero denominator, Match duy nhất, quyền gửi/chống trùng, schema lưu và đoạn trích hợp đồng.
+Playwright hiện dùng Chrome có sẵn trên macOS theo `playwright.config.ts`; máy khác cần chỉnh executable/cài browser phù hợp. Test bao gồm quy tắc tiền, quyền hai chiều, chuyển trạng thái, chống lặp, migration, công thức điểm và các hành trình desktop/mobile. Ảnh/trace ở `test-results/` (ignored). Kết quả đợt UI/UX: lint, typecheck, build và 32 unit test đạt; 27 bài luồng development và 11 bài production đã đạt, các phần sửa tiếp được chạy lại riêng. Chi tiết và ảnh ở [UI-UX-REVIEW.md](docs/UI-UX-REVIEW.md); checklist nghiệp vụ 3.0 vẫn được giữ để đối chiếu.
 
-Playwright dùng Chrome có sẵn trên macOS tại đường dẫn trong `playwright.config.ts`; máy khác cần cấu hình lại executable hoặc dùng browser do Playwright cài. Kiểm thử route trực tiếp, refresh/Back, draft, xác minh, chat, duyệt/ẩn/khôi phục tin và ảnh chụp 390px/1440px ở `test-results/`. Bộ test thiết kế kiểm tra thêm hai theme ở 390×900 và 1440×900, ô tìm xuất hiện trong viewport, header gọn, dropdown, đăng nhập/đăng ký, hướng dẫn mật khẩu, theme lưu và theo hệ thống. Có thể dùng `PLAYWRIGHT_BASE_URL=http://127.0.0.1:3100 npm run test:e2e` với server ở cổng riêng. Danh sách kiểm tra này mô tả bộ test, không tự khẳng định mọi lần chạy đều đạt.
-
-Ảnh phòng/nhân vật chỉ minh họa, dùng local. Nguồn ở [public/images/SOURCES.md](public/images/SOURCES.md).
+Chưa làm: backend/API/phân quyền server, cư trú/giấy tờ thật, ký/thu tiền/đối soát thật, ảnh upload, routing giao thông, AI, email/push/job 7/14 ngày, chống thông đồng, nhóm nhiều người, so sánh phòng bổ sung, bộ lọc nâng cao chưa ghi hỗ trợ, PWA, mở vùng và hạ tầng phục hồi production. Không có nút giả cho các phần này.

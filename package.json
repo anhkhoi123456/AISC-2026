@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbopack",
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "format": "prettier --write src tests playwright.config.ts",
     "lint": "eslint src tests playwright.config.ts",
-    "test:unit": "tsx --test tests/unit/*.test.ts"
+    "test:unit": "tsx --test tests/unit/*.test.ts",
+    "dev:webpack": "next dev --webpack"
   },
   "dependencies": {
     "lucide-react": "^1.59.0",

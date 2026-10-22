@@ -1,6 +1,12 @@
 import { normalize } from "./text";
-import { places } from "../mocks/places";
+import { places, type Place } from "../mocks/places";
+export type Destination = {
+  placeId: string;
+  radiusKm: number;
+  mode: "must" | "prefer";
+};
 export type SearchQuery = {
+  destinations: Destination[];
   area: string;
   place: string;
   budget: string;
@@ -15,6 +21,7 @@ export type SearchQuery = {
   sort: string;
 };
 export const defaultQuery: SearchQuery = {
+  destinations: [],
   area: "",
   place: "",
   budget: "",
@@ -28,12 +35,36 @@ export const defaultQuery: SearchQuery = {
   amenityMode: "must",
   sort: "new",
 };
-export function readQuery(params: URLSearchParams): SearchQuery {
+export function readQuery(
+  params: URLSearchParams,
+  catalog: Place[] = places,
+): SearchQuery {
   const raw = Object.fromEntries(params);
+  let destinations: Destination[] = [];
+  try {
+    const v: unknown = JSON.parse(raw.destinations || "[]");
+    if (Array.isArray(v))
+      destinations = v
+        .filter(
+          (x): x is Destination =>
+            x &&
+            typeof x.placeId === "string" &&
+            (catalog.some((p) => p.id === x.placeId) ||
+              x.placeId === "nearest-metro") &&
+            Number.isFinite(x.radiusKm) &&
+            x.radiusKm > 0 &&
+            x.radiusKm <= 50 &&
+            ["must", "prefer"].includes(x.mode),
+        )
+        .slice(0, 5);
+  } catch {
+    /* Invalid URL constraints are ignored, never executed. */
+  }
   return {
     ...defaultQuery,
+    destinations,
     area: raw.area ?? "",
-    place: places.some((p) => p.id === raw.place) ? raw.place : "",
+    place: catalog.some((p) => p.id === raw.place) ? raw.place : "",
     budget: /^\d+$/.test(raw.budget ?? "") ? raw.budget : "",
     people: Math.max(1, Math.min(4, Number(raw.people) || 2)),
     pets: raw.pets === "1",
@@ -44,33 +75,40 @@ export function readQuery(params: URLSearchParams): SearchQuery {
     kind: raw.kind ?? "",
     petMode: raw.petMode === "prefer" ? "prefer" : "must",
     amenityMode: raw.amenityMode === "prefer" ? "prefer" : "must",
-    sort: ["new", "price", "trust"].includes(raw.sort) ? raw.sort : "new",
+    sort: ["new", "price", "trust", "distance"].includes(raw.sort)
+      ? raw.sort
+      : "new",
   };
 }
 export function writeQuery(q: SearchQuery) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(q)) {
+    if (key === "destinations") {
+      if (q.destinations.length) p.set(key, JSON.stringify(q.destinations));
+      continue;
+    }
     if (value !== defaultQuery[key as keyof SearchQuery])
       p.set(key, value === true ? "1" : String(value));
   }
   return p.toString();
 }
-export function suggestPlaces(input: string) {
+export function suggestPlaces(input: string, catalog: Place[] = places) {
   const q = normalize(input);
   if (!q) return [];
-  return places
+  return catalog
     .filter((p) =>
       normalize(p.name + " " + p.kind + " " + p.aliases.join(" ")).includes(q),
     )
     .slice(0, 8);
 }
-export function parseQuery(input: string) {
+export function parseQuery(input: string, catalog: Place[] = places) {
   const q = normalize(input).replace(/(\d),(\d)/g, "$1.$2"),
     patch: Partial<SearchQuery> = {},
     unknown: string[] = [];
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const destinations: Destination[] = [];
   for (const part of q
-    .split(/[,;]+/)
+    .split(/[,;]+|\s+va\s+(?=gan\b)/)
     .map((x) => x.trim())
     .filter(Boolean)) {
     let rest = part;
@@ -93,7 +131,7 @@ export function parseQuery(input: string) {
       patch.months = lease[1];
       rest = rest.replace(lease[0], " ");
     }
-    const aliases = places
+    const aliases = catalog
       .flatMap((p) =>
         [p.name, ...p.aliases].map((a) => ({ p, a: normalize(a) })),
       )
@@ -101,17 +139,32 @@ export function parseQuery(input: string) {
     for (const { p, a } of aliases) {
       const re = new RegExp("(?:^|\\s)" + escape(a) + "(?=$|\\s)", "g");
       if (re.test(rest)) {
-        patch.place = p.id;
-        patch.area = p.area;
+        patch.place = patch.place || p.id;
+        const radius = rest.match(
+          /(?:duoi|trong|toi da)\s*(\d+(?:\.\d+)?)\s*km/,
+        );
+        const placeId =
+          a === "metro" || a === "tau dien" ? "nearest-metro" : p.id;
+        destinations.push({
+          placeId,
+          radiusKm: radius ? Number(radius[1]) : 2,
+          mode: "must",
+        });
+        if (radius) rest = rest.replace(radius[0], " ");
         rest = rest.replace(re, " ");
         break;
       }
     }
     rest = rest
       .replace(/\b(?:tim|phong|gan|va|toi muon|can)\b/g, " ")
+      .replace(/(?:tong|ngan sach|\/nguoi|nguoi|moi thang)/g, " ")
       .replace(/\s+/g, " ")
       .trim();
     if (rest) unknown.push(rest);
+  }
+  if (destinations.length) {
+    patch.destinations = destinations;
+    patch.area = "";
   }
   return { patch, unknown };
 }

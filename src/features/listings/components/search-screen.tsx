@@ -1,8 +1,11 @@
 "use client";
+import { DestinationFilters } from "@/features/search/components-destinations";
+import { destinationName } from "@/services/geography";
+import { occupancy, physicalId } from "@/services/housing";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useDemo } from "@/shared/lib/demo-store";
-import { PageTitle, Empty } from "@/shared/components/ui";
+import { PageTitle, Empty, Modal } from "@/shared/components/ui";
 import { Icon } from "@/shared/components/icon";
 import { areas } from "../mocks/listings";
 import { RoomCard } from "./room-card";
@@ -14,7 +17,8 @@ import {
   writeQuery,
   type SearchQuery,
 } from "@/features/search/lib/query";
-import { places, type Place } from "@/features/search/mocks/places";
+import { type Place } from "@/features/search/mocks/places";
+import { destinationCatalog } from "@/services/destinations";
 import { searchService } from "@/services/search";
 export function SearchScreen(props: { favorites?: boolean }) {
   return (
@@ -27,13 +31,13 @@ export function SearchScreen(props: { favorites?: boolean }) {
 }
 function SearchContent({ favorites = false }: { favorites?: boolean }) {
   const { data } = useDemo();
-  const router = useRouter(),
-    pathname = usePathname(),
+  const catalog = useMemo(() => destinationCatalog(data), [data]);
+  const pathname = usePathname(),
     params = useSearchParams();
   const serialized = params.toString();
   const q = useMemo(
-    () => readQuery(new URLSearchParams(serialized)),
-    [serialized],
+    () => readQuery(new URLSearchParams(serialized), catalog),
+    [serialized, catalog],
   );
   const [query, setQuery] = useState("");
   const [note, setNote] = useState("");
@@ -52,25 +56,30 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
   useEffect(() => {
     if (sourceQuery) {
       setQuery(sourceQuery);
-      const parsed = parseQuery(sourceQuery);
+      const parsed = parseQuery(sourceQuery, catalog);
       setUnknown(parsed.unknown);
       if (parsed.unknown.length)
         setNote(
           "Một phần nhu cầu chưa được hiểu. Hãy chỉnh bằng bộ lọc bên dưới.",
         );
     }
-  }, [sourceQuery]);
-  const suggestions = suggestPlaces(query);
+  }, [sourceQuery, catalog]);
+  const suggestions = suggestPlaces(query, catalog);
   const listings = useMemo(
-    () => data.listings.filter((r) => !favorites || data.saved.includes(r.id)),
-    [data.listings, data.saved, favorites],
+    () =>
+      data.listings.filter(
+        (r) =>
+          (!favorites || data.saved.includes(r.id)) &&
+          (favorites || occupancy(data, physicalId(r)).available > 0),
+      ),
+    [data, favorites],
   );
   useEffect(() => {
     let current = true;
     setLoading(true);
     setError("");
     searchService
-      .search(listings, q)
+      .search(listings, q, catalog)
       .then((r) => {
         if (current) {
           setResult(r);
@@ -79,44 +88,61 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
       })
       .catch(() => {
         if (current) {
-          setError("Không tải được kết quả demo. Hãy thử lại.");
+          setError("Không tải được kết quả. Hãy thử lại.");
           setLoading(false);
         }
       });
     return () => {
       current = false;
     };
-  }, [listings, q, retry]);
+  }, [listings, q, retry, catalog]);
   function change(patch: Partial<SearchQuery>) {
-    const next = { ...q, ...patch };
+    const next = {
+      ...readQuery(new URLSearchParams(window.location.search), catalog),
+      ...patch,
+    };
     const qs = writeQuery(next);
-    router.push(pathname + (qs ? "?" + qs : ""), { scroll: false });
+    window.history.pushState(null, "", pathname + (qs ? "?" + qs : ""));
   }
   function choose(p: Place) {
-    change({ place: p.id, area: p.area });
+    change({
+      place: p.id,
+      area: "",
+      destinations: [{ placeId: p.id, radiusKm: 2, mode: "must" }],
+    });
     setQuery(p.name);
     setOpen(false);
     setActive(-1);
     setNote(
-      "Địa điểm đã được chọn từ dữ liệu mẫu. Vị trí tìm theo cụm; chưa đo khoảng cách thực tế.",
+      "Địa điểm đã được chọn từ dữ liệu mẫu. Khoảng cách đường chim bay từ tọa độ mẫu, không phải thời gian đi đường.",
     );
   }
   function edit(id: string) {
-    setFiltersOpen(true);
+    if (matchMedia("(max-width: 900px)").matches) setFiltersOpen(true);
     requestAnimationFrame(() => {
       const field = filterRef.current?.querySelector<HTMLElement>("#" + id);
       field?.focus();
       field?.scrollIntoView({ block: "center", behavior: "smooth" });
     });
   }
-  const anchor = places.find((p) => p.id === q.place);
+  const anchor = catalog.find((p) => p.id === q.place);
   const chips: {
     key: string;
     label: string;
     clear: Partial<SearchQuery>;
     field: string;
   }[] = [];
-  if (anchor)
+  for (const [i, d] of q.destinations.entries())
+    chips.push({
+      key: `destination-${i}`,
+      label: `${destinationName(d.placeId, catalog)} ≤ ${d.radiusKm} km · ${d.mode === "must" ? "Bắt buộc" : "Ưu tiên"}`,
+      clear: {
+        destinations: q.destinations.filter((_, n) => n !== i),
+        place: "",
+      },
+      field: "area-filter",
+    });
+  if (anchor && !q.destinations.length)
     chips.push({
       key: "place",
       label: anchor.name,
@@ -173,11 +199,197 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
       clear: { amenity: "" },
       field: "amenity-filter",
     });
+  const filterControls = (
+    <aside
+      ref={filterRef}
+      className={"filter-panel " + (filtersOpen ? "is-open" : "")}
+    >
+      <div className="filter-heading">
+        <h3>
+          <Icon name="sliders" size={18} />
+          Bộ lọc của bạn
+        </h3>
+        <button
+          className="text-btn"
+          onClick={() => {
+            window.history.pushState(null, "", pathname);
+            setQuery("");
+            setNote("");
+            setUnknown([]);
+          }}
+        >
+          Đặt lại
+        </button>
+      </div>
+      <DestinationFilters
+        value={q.destinations}
+        onChange={(destinations) => change({ destinations, place: "" })}
+      />
+      <label>
+        Khu vực (bắt buộc)
+        <select
+          id="area-filter"
+          value={q.area}
+          onChange={(e) => change({ area: e.target.value, place: "" })}
+        >
+          <option value="">Tất cả khu vực</option>
+          {areas.map((a) => (
+            <option key={a}>{a}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Tổng ước tính / người / tháng
+        <select
+          id="budget-filter"
+          value={q.budget}
+          onChange={(e) => change({ budget: e.target.value })}
+        >
+          <option value="">Không giới hạn</option>
+          {["1500000", "2000000", "2500000", "3000000"].map((n) => (
+            <option key={n} value={n}>
+              Dưới {Number(n) / 1000000} triệu
+            </option>
+          ))}
+          {q.budget &&
+            !["1500000", "2000000", "2500000", "3000000"].includes(
+              q.budget,
+            ) && (
+              <option value={q.budget}>
+                Dưới {Number(q.budget) / 1000000} triệu
+              </option>
+            )}
+        </select>
+      </label>
+      <label>
+        Số người cùng ở
+        <select
+          value={q.people}
+          onChange={(e) => change({ people: Number(e.target.value) })}
+        >
+          {[1, 2, 3, 4].map((n) => (
+            <option key={n} value={n}>
+              {n} người
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Thời hạn muốn thuê
+        <select
+          id="months-filter"
+          value={q.months}
+          onChange={(e) => change({ months: e.target.value })}
+        >
+          <option value="">Chưa chọn</option>
+          {[3, 6, 10, 12].map((n) => (
+            <option key={n} value={n}>
+              {n} tháng
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Loại phòng
+        <select
+          id="kind-filter"
+          value={q.kind}
+          onChange={(e) => change({ kind: e.target.value })}
+        >
+          <option value="">Tất cả</option>
+          {["Phòng trọ", "Studio", "Ở ghép"].map((v) => (
+            <option key={v}>{v}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Tiện nghi cần có
+        <select
+          id="amenity-filter"
+          value={q.amenity}
+          onChange={(e) => change({ amenity: e.target.value })}
+        >
+          <option value="">Tất cả tiện nghi</option>
+          {[
+            "Máy lạnh",
+            "WC riêng",
+            "Ban công",
+            "Bếp riêng",
+            "Nội thất",
+            "Chỗ để xe",
+            "Cửa sổ",
+          ].map((a) => (
+            <option key={a}>{a}</option>
+          ))}
+        </select>
+      </label>
+      {q.amenity && (
+        <label>
+          Mức quan trọng tiện nghi
+          <select
+            value={q.amenityMode}
+            onChange={(e) =>
+              change({ amenityMode: e.target.value as "must" | "prefer" })
+            }
+          >
+            <option value="must">Bắt buộc</option>
+            <option value="prefer">Ưu tiên</option>
+          </select>
+        </label>
+      )}
+      <label className="check-label">
+        <input
+          id="pets-filter"
+          type="checkbox"
+          checked={q.pets}
+          onChange={(e) => change({ pets: e.target.checked })}
+        />
+        Cho nuôi thú cưng
+      </label>
+      {q.pets && (
+        <label>
+          Loại thú cưng
+          <select
+            value={q.petType}
+            onChange={(e) =>
+              change({ petType: e.target.value as "any" | "cat" | "dog" })
+            }
+          >
+            <option value="any">Thú cưng chung</option>
+            <option value="cat">Mèo</option>
+            <option value="dog">Chó</option>
+          </select>
+        </label>
+      )}
+      {q.pets && (
+        <label>
+          Mức quan trọng thú cưng
+          <select
+            value={q.petMode}
+            onChange={(e) =>
+              change({ petMode: e.target.value as "must" | "prefer" })
+            }
+          >
+            <option value="must">Bắt buộc</option>
+            <option value="prefer">Ưu tiên</option>
+          </select>
+        </label>
+      )}
+      <div className="filter-tip">
+        <Icon name="leaf" size={23} />
+        <h4>Điều kiện tìm phòng</h4>
+        <p>
+          Điều kiện bắt buộc lọc nhóm chính. Điều kiện ưu tiên chỉ tăng thứ tự.
+          Chi phí dùng 120 kWh/phòng/tháng và 1 xe/người.
+        </p>
+      </div>
+    </aside>
+  );
   return (
     <main className="container section">
       <PageTitle
         title={favorites ? "Tin đã lưu" : "Tìm phòng"}
-        description="Lọc theo khu vực, ngân sách và điều kiện ở. Tin và địa điểm trong bản này là dữ liệu mẫu."
+        description="Chọn khu vực, ngân sách và điều kiện ở."
       />
       {!favorites && (
         <form
@@ -188,7 +400,7 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
               choose(suggestions[active]);
               return;
             }
-            const parsed = parseQuery(query);
+            const parsed = parseQuery(query, catalog);
             change(parsed.patch);
             setUnknown(parsed.unknown);
             setOpen(false);
@@ -282,194 +494,35 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
         </p>
       )}
       <div className="search-layout">
-        <aside
-          ref={filterRef}
-          className={"filter-panel " + (filtersOpen ? "is-open" : "")}
-        >
-          <div className="filter-heading">
-            <h3>
-              <Icon name="sliders" size={18} />
-              Bộ lọc của bạn
-            </h3>
+        {!filtersOpen && filterControls}
+        {filtersOpen && (
+          <Modal title="Bộ lọc phòng" onClose={() => setFiltersOpen(false)}>
+            {filterControls}
             <button
-              className="text-btn"
-              onClick={() => {
-                router.push(pathname, { scroll: false });
-                setQuery("");
-                setNote("");
-                setUnknown([]);
-              }}
+              className="btn primary full"
+              onClick={() => setFiltersOpen(false)}
             >
-              Đặt lại
+              Xem kết quả
             </button>
-          </div>
-          <label>
-            Khu vực (bắt buộc)
-            <select
-              id="area-filter"
-              value={q.area}
-              onChange={(e) => change({ area: e.target.value, place: "" })}
-            >
-              <option value="">Tất cả khu vực mẫu</option>
-              {areas.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Tổng ước tính / người / tháng
-            <select
-              id="budget-filter"
-              value={q.budget}
-              onChange={(e) => change({ budget: e.target.value })}
-            >
-              <option value="">Không giới hạn</option>
-              {["1500000", "2000000", "2500000", "3000000"].map((n) => (
-                <option key={n} value={n}>
-                  Dưới {Number(n) / 1000000} triệu
-                </option>
-              ))}
-              {q.budget &&
-                !["1500000", "2000000", "2500000", "3000000"].includes(
-                  q.budget,
-                ) && (
-                  <option value={q.budget}>
-                    Dưới {Number(q.budget) / 1000000} triệu
-                  </option>
-                )}
-            </select>
-          </label>
-          <label>
-            Số người cùng ở
-            <select
-              value={q.people}
-              onChange={(e) => change({ people: Number(e.target.value) })}
-            >
-              {[1, 2, 3, 4].map((n) => (
-                <option key={n} value={n}>
-                  {n} người
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Thời hạn muốn thuê
-            <select
-              id="months-filter"
-              value={q.months}
-              onChange={(e) => change({ months: e.target.value })}
-            >
-              <option value="">Chưa chọn</option>
-              {[3, 6, 10, 12].map((n) => (
-                <option key={n} value={n}>
-                  {n} tháng
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Loại phòng
-            <select
-              id="kind-filter"
-              value={q.kind}
-              onChange={(e) => change({ kind: e.target.value })}
-            >
-              <option value="">Tất cả</option>
-              {["Phòng trọ", "Studio", "Ở ghép"].map((v) => (
-                <option key={v}>{v}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Tiện nghi cần có
-            <select
-              id="amenity-filter"
-              value={q.amenity}
-              onChange={(e) => change({ amenity: e.target.value })}
-            >
-              <option value="">Tất cả tiện nghi</option>
-              {[
-                "Máy lạnh",
-                "WC riêng",
-                "Ban công",
-                "Bếp riêng",
-                "Nội thất",
-                "Chỗ để xe",
-                "Cửa sổ",
-              ].map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
-          </label>
-          {q.amenity && (
-            <label>
-              Mức quan trọng tiện nghi
-              <select
-                value={q.amenityMode}
-                onChange={(e) =>
-                  change({ amenityMode: e.target.value as "must" | "prefer" })
-                }
-              >
-                <option value="must">Bắt buộc</option>
-                <option value="prefer">Ưu tiên</option>
-              </select>
-            </label>
-          )}
-          <label className="check-label">
-            <input
-              id="pets-filter"
-              type="checkbox"
-              checked={q.pets}
-              onChange={(e) => change({ pets: e.target.checked })}
-            />
-            Cho nuôi thú cưng
-          </label>
-          {q.pets && (
-            <label>
-              Loại thú cưng
-              <select
-                value={q.petType}
-                onChange={(e) =>
-                  change({ petType: e.target.value as "any" | "cat" | "dog" })
-                }
-              >
-                <option value="any">Thú cưng chung</option>
-                <option value="cat">Mèo</option>
-                <option value="dog">Chó</option>
-              </select>
-            </label>
-          )}
-          {q.pets && (
-            <label>
-              Mức quan trọng thú cưng
-              <select
-                value={q.petMode}
-                onChange={(e) =>
-                  change({ petMode: e.target.value as "must" | "prefer" })
-                }
-              >
-                <option value="must">Bắt buộc</option>
-                <option value="prefer">Ưu tiên</option>
-              </select>
-            </label>
-          )}
-          <div className="filter-tip">
-            <Icon name="leaf" size={23} />
-            <h4>Điều kiện tìm phòng</h4>
-            <p>
-              Điều kiện bắt buộc lọc nhóm chính. Điều kiện ưu tiên chỉ tăng thứ
-              tự. Chi phí dùng 120 kWh/phòng/tháng và 1 xe/người.
-            </p>
-          </div>
-        </aside>
+          </Modal>
+        )}
         <div className="search-results">
           <div className="results-toolbar">
             <span>
-              <strong>{result?.exact.length ?? 0} căn phòng</strong> phù hợp với
-              bạn
+              {loading ? (
+                "Đang tìm phòng…"
+              ) : error ? (
+                "Chưa tải được kết quả"
+              ) : (
+                <>
+                  <strong>{result?.exact.length ?? 0} căn phòng</strong> đạt bộ
+                  lọc
+                </>
+              )}
             </span>
             <button
               className="btn soft mobile-filter"
+              aria-expanded={filtersOpen}
               onClick={() => setFiltersOpen(!filtersOpen)}
             >
               <Icon name="sliders" size={16} />
@@ -482,7 +535,8 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
             >
               <option value="new">Mới cập nhật</option>
               <option value="price">Chi phí thấp nhất</option>
-              <option value="trust">Điểm minh họa cao nhất</option>
+              <option value="distance">Khoảng cách đến điểm đầu tiên</option>
+              <option value="trust">Thông tin minh bạch hơn</option>
             </select>
           </div>
           {chips.length > 0 && (
@@ -507,7 +561,7 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
           )}
           {loading ? (
             <div className="loading-panel" role="status">
-              Đang tìm những căn phòng phù hợp…
+              Đang tìm phòng…
             </div>
           ) : error ? (
             <div className="empty" role="alert">
@@ -531,10 +585,10 @@ function SearchContent({ favorites = false }: { favorites?: boolean }) {
                 <Empty
                   title={
                     favorites
-                      ? "Chưa có căn phòng nào ở đây"
-                      : "Chưa tìm thấy căn phòng vừa ý"
+                      ? "Chưa lưu phòng nào"
+                      : "Không có phòng đạt bộ lọc"
                   }
-                  description="Bạn có thể sửa điều kiện. AnTro không tự nới ngân sách hoặc yêu cầu bắt buộc."
+                  description="Thử thay đổi bộ lọc để xem các phòng khác."
                   action={
                     <button
                       className="btn primary"

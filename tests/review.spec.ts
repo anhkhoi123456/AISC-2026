@@ -13,13 +13,9 @@ for (const width of [390, 1440])
     await page.goto("/dang-nhap");
     await finishDemoLogin(page);
     await page.goto("/roommatch/ho-so");
-    await expect(
-      page.getByText(/Danh tính mẫu đã xác minh \(chỉ đọc\)/),
-    ).toBeVisible();
+    await expect(page.getByText(/Danh tính mẫu \(chỉ đọc\)/)).toBeVisible();
     await expect(page.getByLabel("Giới tính tự khai")).toHaveCount(0);
-    await page
-      .getByLabel("Trường / nơi làm việc (điểm neo)")
-      .selectOption("hcmut");
+    await page.getByLabel("Trường hoặc nơi làm việc").selectOption("hcmut");
     await expect(
       page.getByRole("checkbox", {
         name: "Gần ĐH Công nghệ Thông tin",
@@ -48,7 +44,7 @@ for (const width of [390, 1440])
     const card = page.locator(".person-card");
     await expect(card).toHaveCount(1);
     await expect(card).toContainText("Ngọc Linh");
-    await expect(card).toContainText("User Trust:");
+    await expect(card).toContainText("Điểm hồ sơ mẫu:");
     await expect(card).toContainText("Khu vực giao nhau:");
     await page.screenshot({
       path: `test-results/review-deck-${width}.png`,
@@ -80,7 +76,7 @@ for (const width of [390, 1440])
     await page.getByRole("button", { name: "Hoàn tác lượt gần nhất" }).click();
     await expect(card).toContainText("Ngọc Linh");
     await card.getByRole("button", { name: "Quan tâm", exact: true }).click();
-    await page.getByRole("link", { name: "Gửi lời chào đầu tiên" }).click();
+    await page.getByRole("link", { name: "Nhắn tin" }).click();
     const secret = "Gọi 0901234567 hoặc demo@example.com";
     await page.getByLabel("Nội dung tin nhắn").fill(secret);
     await page
@@ -125,7 +121,7 @@ for (const width of [390, 1440])
     await expect(page.getByLabel("Nội dung tin nhắn")).toHaveCount(0);
     await page.goto("/tai-khoan");
     await page
-      .getByRole("button", { name: "Xóa dữ liệu tài khoản demo", exact: true })
+      .getByRole("button", { name: "Xóa dữ liệu trên thiết bị", exact: true })
       .click();
     await page
       .getByRole("button", { name: "Xác nhận xóa dữ liệu tài khoản" })
@@ -186,7 +182,7 @@ test("legacy migration keeps messages and original raw backup, even when backup 
         () => JSON.parse(localStorage.getItem("antro-demo-v2")!).version,
       ),
     )
-    .toBe(3);
+    .toBe(4);
   const restored = await page.evaluate(
     () => JSON.parse(localStorage.getItem("antro-demo-v2")!).data,
   );

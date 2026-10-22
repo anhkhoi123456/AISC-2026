@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { DemoActors } from "@/features/housing/components/demo-actors";
 import { consentContact } from "@/services/chat-safety";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,35 +9,33 @@ import type { Role } from "@/shared/lib/models";
 import { Modal } from "./ui";
 import { Icon } from "./icon";
 export function DemoTools() {
-  const { data, update, reset, storageError } = useDemo();
+  const { data, update, reset, busy } = useDemo();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const router = useRouter();
+  if (process.env.NODE_ENV !== "development") return null;
   return (
     <>
       <button
         className="demo-tools-toggle"
-        title="Công cụ demo"
+        title="Công cụ nội bộ · Development"
         aria-label={`Vai trò demo: ${{ guest: "Khách", tenant: "Người thuê", landlord: "Chủ trọ", admin: "Admin" }[data.role]}`}
         onClick={() => setOpen(true)}
       >
         <Icon name="sliders" size={14} />
         <span className="sr-only">Công cụ demo</span>
       </button>
-      {storageError && (
-        <p role="alert" className="warning storage-warning">
-          {storageError}
-        </p>
-      )}
       {open && (
-        <Modal title="Điều khiển bản demo" onClose={() => setOpen(false)}>
+        <Modal title="Công cụ nội bộ" onClose={() => setOpen(false)}>
           <p className="muted">
             Vai trò chỉ thay đổi giao diện và dữ liệu mô phỏng. Đây không phải
             phân quyền bảo mật.
           </p>
+          <DemoActors internal />
           <label>
             Vai trò demo
             <select
+              disabled={busy}
               value={data.role}
               onChange={(e) => {
                 const role = e.target.value as Role;
@@ -69,6 +68,14 @@ export function DemoTools() {
             Chọn vai trò rồi hoàn tất đăng nhập → OTP → danh tính mẫu. Không có
             chuyển trực tiếp sang đã xác minh.
           </p>
+          <div className="inline-actions">
+            <Link href="/noi-o" onClick={() => setOpen(false)}>
+              Nơi ở của tôi
+            </Link>
+            <Link href="/thong-bao" onClick={() => setOpen(false)}>
+              Thông báo
+            </Link>
+          </div>
           <details>
             <summary>Thay dữ liệu danh tính mẫu</summary>
             <p>Thay mẫu sẽ yêu cầu xác minh lại và ẩn hồ sơ.</p>

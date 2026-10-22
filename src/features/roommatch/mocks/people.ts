@@ -81,6 +81,7 @@ export const people: Person[] = [
   {
     ...emptyProfile,
     id: "vy",
+    areas: [areas[0], areas[1]],
     anchor: "hcmus",
     name: "Thảo Vy",
     school: "ĐH Khoa học Tự nhiên",

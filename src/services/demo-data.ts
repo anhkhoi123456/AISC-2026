@@ -1,3 +1,6 @@
+import { validHousing } from "./housing-validation";
+import { seedHousing } from "./housing-seed";
+import { createHousing } from "./housing";
 import type { DemoState, Profile } from "@/shared/lib/models";
 import { initialListings } from "@/features/listings/mocks/listings";
 import { emptyProfile } from "@/features/roommatch/mocks/people";
@@ -5,6 +8,7 @@ import { delay } from "./latency";
 export const STORAGE_KEY = "antro-demo-v2";
 export const createInitialState = (): DemoState =>
   structuredClone({
+    housing: seedHousing(initialListings),
     identity: {
       name: "Minh Anh",
       gender: "Nữ",
@@ -138,7 +142,7 @@ export function validState(v: unknown): v is DemoState {
           "changes",
           "rejected",
           "hidden",
-          "rented",
+          "rented", "closed",
         ].includes(String(r.status)),
     ) &&
     Array.isArray(v.reports) &&
@@ -160,7 +164,7 @@ export function validState(v: unknown): v is DemoState {
             "changes",
             "rejected",
             "hidden",
-            "rented",
+            "rented", "closed",
           ].includes(String(r.previousStatus))) &&
         (r.previousProfileHidden === undefined ||
           typeof r.previousProfileHidden === "boolean"),
@@ -272,6 +276,9 @@ export function migrateState(s: DemoState): DemoState {
   });
   return {
     ...s,
+    housing: s.housing
+      ? { ...s.housing, trustAdjustments: s.housing.trustAdjustments ?? [] }
+      : createHousing(s.listings),
     identity: s.identity ?? {
       name: s.profile.name,
       gender: s.profile.gender,
@@ -298,17 +305,32 @@ export function decodeState(raw: string | null): {
     const envelope: unknown = JSON.parse(raw);
     if (
       !record(envelope) ||
-      ![2, 3].includes(Number(envelope.version)) ||
+      ![2, 3, 4].includes(Number(envelope.version)) ||
       !validState(envelope.data) ||
-      (envelope.version === 3 && !validExpanded(envelope.data as DemoState))
+      (Number(envelope.version) >= 3 &&
+        !validExpanded(envelope.data as DemoState))
     )
       throw Error();
+    const housing = (envelope.data as DemoState).housing;
+    if (Number(envelope.version) >= 4 && !validHousing(housing)) {
+      const core = {
+        ...envelope.data,
+        housing: createHousing(envelope.data.listings),
+      };
+      return {
+        state: migrateState(core),
+        notice:
+          "Hồ sơ nơi ở v4 không hợp lệ. Đã giữ tin, hồ sơ và chat cũ; phần lượt ở được cô lập. Bản gốc được sao lưu để đối chiếu/khôi phục, chưa tự cấp quyền review.",
+      };
+    }
     return {
       state: migrateState(envelope.data),
       notice:
         envelope.version === 2
           ? "Đã nâng dữ liệu demo v2 lên v3, giữ hồ sơ, tin và hội thoại. Các khoản 0 cũ chưa phân loại được đánh dấu Chưa khai báo; hãy rà lại hồ sơ."
-          : "",
+          : envelope.version === 3
+            ? "Đã bổ sung mô hình căn phòng và lượt ở v4; giữ nguyên tin, hồ sơ và chat. Dữ liệu cũ chưa được xác nhận thành lượt ở hoặc review. Có bản sao v3 trước chuyển đổi."
+            : "",
     };
   } catch {
     return {
@@ -324,6 +346,18 @@ export const demoDataService = {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const decoded = decodeState(raw);
+      if (
+        raw &&
+        decoded.notice &&
+        !localStorage.getItem("antro-demo-before-v4")
+      ) {
+        try {
+          localStorage.setItem("antro-demo-before-v4", raw);
+        } catch {
+          decoded.notice +=
+            " Không tạo được bản sao v4 do bộ nhớ đầy; dữ liệu đang đọc vẫn được giữ.";
+        }
+      }
       if (
         raw &&
         decoded.notice &&
@@ -348,7 +382,7 @@ export const demoDataService = {
   save(state: DemoState) {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: 3, data: state }),
+      JSON.stringify({ version: 4, data: state }),
     );
   },
 };

@@ -1,3 +1,4 @@
+import { recruitingAllowed, physicalId, actorId, occupancy } from "./housing";
 import type {
   Criterion,
   DemoState,
@@ -259,18 +260,29 @@ export function validateProfile(p: Profile, state?: DemoState) {
     p.scenario === "Đã có phòng" &&
     (!p.roomId ||
       !state?.listings.some(
-        (r) => r.id === p.roomId && r.status === "published",
+        (r) =>
+          (physicalId(r) === p.roomId || r.id === p.roomId) &&
+          r.status === "published",
       ))
   )
     throw new Error("Hãy liên kết một phòng đang hiển thị.");
   if (p.scenario === "Đã có phòng" && state) {
-    const room = state.listings.find((r) => r.id === p.roomId)!;
+    const room = state.listings.find(
+      (r) =>
+        (physicalId(r) === p.roomId || r.id === p.roomId) &&
+        r.status === "published",
+    )!;
+    if (!recruitingAllowed(state, physicalId(room), actorId(state)))
+      throw Error(
+        "Cần lượt ở đang hoạt động, chỗ trống và quyền tuyển roommate của phòng.",
+      );
     if (!p.areas.includes(room.area))
       throw Error("Khu vực muốn ở phải chứa khu vực phòng liên kết.");
-    if (p.vacancies >= room.capacity)
-      throw Error(
-        "Chỗ trống phải nhỏ hơn sức chứa, còn ít nhất một người đang ở.",
-      );
+    if (
+      p.vacancies >= room.capacity ||
+      p.vacancies > occupancy(state, physicalId(room)).available
+    )
+      throw Error("Số chỗ tuyển không được vượt chỗ trống thực tế của phòng.");
   }
 }
 function eligible(state: DemoState, p: Person) {
@@ -290,14 +302,22 @@ function eligible(state: DemoState, p: Person) {
         : null;
   if (owner) {
     const room = state.listings.find(
-      (r) => r.id === owner.roomId && r.status === "published",
+      (r) =>
+        (physicalId(r) === owner.roomId || r.id === owner.roomId) &&
+        r.status === "published",
     );
     const seeker = owner === p ? state.profile : p;
     if (
       !room ||
+      !recruitingAllowed(
+        state,
+        physicalId(room),
+        owner === p ? p.id : actorId(state),
+      ) ||
       room.capacity < 2 ||
       owner.vacancies < 1 ||
-      owner.vacancies >= room.capacity
+      owner.vacancies >= room.capacity ||
+      owner.vacancies > occupancy(state, physicalId(room)).available
     )
       return false;
     if (

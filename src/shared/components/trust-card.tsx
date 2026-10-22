@@ -1,34 +1,42 @@
 "use client";
 import { useState } from "react";
 import type { Listing } from "@/shared/lib/models";
-import { trustScore, priceBenchmark } from "@/services/trust";
+import { useDemo } from "@/shared/lib/demo-store";
+import { roomTrust } from "@/services/room-trust";
+import { priceBenchmark } from "@/services/trust";
+import { physicalId, createCase } from "@/services/housing";
 import { money } from "@/features/listings/lib/cost";
 import { Modal } from "./ui";
-import { Icon } from "./icon";
 export function TrustCard({ room }: { room: Listing }) {
-  const [open, setOpen] = useState(false);
-  const trust = trustScore(room),
+  const { data, command } = useDemo(),
+    [open, setOpen] = useState(false),
+    trust = roomTrust(data, room),
     price = priceBenchmark(room.area);
   return (
     <section className="trust-panel">
       <div className="trust-summary">
         <span className="trust-number">
-          {trust.score}
+          {trust.score ?? "—"}
           <small>/100</small>
         </span>
         <div>
-          <strong>Listing Trust · Giả lập</strong>
+          <strong>Điểm tham khảo căn phòng</strong>
+          <p>
+            {trust.score === null
+              ? "Chưa đủ dữ liệu"
+              : `${trust.count} review từ ${trust.accounts} tài khoản mẫu`}
+          </p>
           <button className="text-btn" onClick={() => setOpen(true)}>
-            Vì sao điểm này? <Icon name="arrow" size={14} />
+            Vì sao điểm này?
           </button>
         </div>
       </div>
       <p>
-        Điểm từ dữ liệu mẫu, không chứng minh danh tính, quyền cho thuê hoặc độ
-        an toàn.
+        Điểm minh bạch tin hiện tại: <b>{trust.M}/100</b>. Huy hiệu xác minh và
+        trải nghiệm người từng ở là các thông tin riêng.
       </p>
       <div className="price-benchmark">
-        <strong>Khoảng giá tham khảo · Demo</strong>
+        <strong>Khoảng giá tham khảo</strong>
         <p>
           {price
             ? `${money(price.min)} – ${money(price.max)} / phòng / tháng`
@@ -43,37 +51,63 @@ export function TrustCard({ room }: { room: Listing }) {
       </div>
       {open && (
         <Modal
-          title="Điểm minh họa được tính thế nào?"
+          title="Điểm căn phòng được tính thế nào?"
           onClose={() => setOpen(false)}
         >
           <p>
-            Công thức Listing 30/25/20/15/10. Thành phần ảnh chỉ có điểm khi
-            được gán kết quả kiểm tra mẫu rõ ràng. Không cộng điểm vì “AI đã
-            kiểm tra ảnh”.
+            T = làm tròn(0,4 M + 0,4 R + 0,2 H). Chỉ hiện tổng khi có ít nhất 3
+            review hợp lệ từ các tài khoản và lượt ở khác nhau.
           </p>
           <div className="trust-rows">
-            {trust.components.map((c) => (
-              <div key={c.label}>
-                <span>{c.label}</span>
-                <strong>
-                  {c.score.toFixed(2)}/{c.max}
-                </strong>
-              </div>
-            ))}
+            <div>
+              <span>M · Thông tin, chi phí và điều kiện</span>
+              <b>{trust.M}/100</b>
+            </div>
+            <div>
+              <span>R · 25 × (sao trung bình − 1)</span>
+              <b>{trust.R === null ? "Chưa có" : trust.R.toFixed(2)}</b>
+            </div>
+            <div>
+              <span>H · Sự kiện vận hành đã xác nhận</span>
+              <b>{trust.H}/100</b>
+            </div>
           </div>
-          {trust.penalties.map((p) => (
-            <p className="warning-text" key={p.label}>
-              {p.label}: −{p.score}
-            </p>
-          ))}
           <p>
-            Tổng = làm tròn(tổng thành phần − {trust.deductions}) ={" "}
-            {trust.score}/100. Không dùng ngưỡng User Trust để phân loại tin.
+            H khởi điểm giả định 70; mỗi lần bàn giao xác nhận hợp lệ +2, tối đa
+            +20; mỗi vụ vi phạm đã xác nhận −10. Không dùng số report chưa xử
+            lý, không thưởng lặp hoặc trừ vì tăng giá đúng quy trình.
           </p>
-          <p className="fineprint">
-            Ảnh có sẵn chỉ là tín hiệu dữ liệu được cung cấp, chưa kiểm tra độ
-            xác thực. Điểm không thay thế việc xem phòng và kiểm tra thông tin.
+          <p>
+            Tổng:{" "}
+            {trust.score === null ? "Chưa đủ dữ liệu" : trust.score + "/100"}.{" "}
+            {trust.count} mẫu · cập nhật{" "}
+            {new Date(trust.at).toLocaleDateString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+            })}
+            . Công thức tham khảo chưa được hiệu chỉnh, không bảo đảm an toàn.
           </p>
+          {data.status === "active" && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                command((s) =>
+                  createCase(
+                    s,
+                    "trust",
+                    physicalId(room),
+                    String(f.get("reason")),
+                  ),
+                );
+              }}
+            >
+              <label>
+                Căn cứ yêu cầu xem lại điểm
+                <textarea name="reason" required minLength={10} />
+              </label>
+              <button className="btn outline">Gửi yêu cầu xem lại điểm</button>
+            </form>
+          )}
         </Modal>
       )}
     </section>
